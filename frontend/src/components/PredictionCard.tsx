@@ -73,6 +73,22 @@ export default function PredictionCard({ prediction }: PredictionCardProps) {
         </div>
       </div>
 
+      {/* Explainable AI Heatmap (Grad-CAM) */}
+      {prediction.gradcam_image && (
+        <div className="glass-card p-6">
+          <h3 className="text-base font-outfit font-semibold text-emerald-100 mb-4 flex items-center gap-2">
+            <Leaf className="w-4 h-4 text-emerald-400" />
+            Explainable AI Heatmap (Grad-CAM)
+          </h3>
+          <div className="rounded-xl overflow-hidden border border-emerald-500/20 max-w-md mx-auto">
+            <img src={prediction.gradcam_image} alt="Grad-CAM Heatmap" className="w-full h-auto bg-dark-800" />
+          </div>
+          <p className="text-xs text-emerald-200/40 mt-3 text-center">
+            The heatmap highlights the regions (in red/yellow) that the AI model focused on to make this prediction.
+          </p>
+        </div>
+      )}
+
       {/* Top 5 Predictions */}
       <div className="glass-card p-6">
         <div className="flex items-center gap-2 mb-4">

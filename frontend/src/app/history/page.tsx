@@ -10,6 +10,8 @@ import { useAuth } from '@/contexts/AuthContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
 interface PredictionRecord {
   id: string
   plantName: string
@@ -55,7 +57,7 @@ export default function HistoryPage() {
 
   const fetchHistory = async () => {
     try {
-      const res = await fetch('/api/history', { headers: { Authorization: `Bearer ${token}` } })
+      const res = await fetch(`${API_URL}/api/history`, { headers: { Authorization: `Bearer ${token}` } })
       if (res.ok) {
         const data = await res.json()
         setPredictions(data.predictions)
@@ -65,7 +67,7 @@ export default function HistoryPage() {
 
   const fetchStats = async () => {
     try {
-      const res = await fetch('/api/history/stats', { headers: { Authorization: `Bearer ${token}` } })
+      const res = await fetch(`${API_URL}/api/history/stats`, { headers: { Authorization: `Bearer ${token}` } })
       if (res.ok) setStats(await res.json())
     } catch {}
   }
@@ -73,7 +75,7 @@ export default function HistoryPage() {
   const deletePrediction = async (id: string, e?: React.MouseEvent) => {
     e?.stopPropagation()
     try {
-      await fetch(`/api/history/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
+      await fetch(`${API_URL}/api/history/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
       setPredictions((prev) => prev.filter((p) => p.id !== id))
       if (selectedReport?.id === id) setSelectedReport(null)
       fetchStats()

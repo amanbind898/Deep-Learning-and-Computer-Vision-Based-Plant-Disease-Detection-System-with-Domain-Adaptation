@@ -7,15 +7,20 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 /**
  * Predict plant disease from image
  */
-export async function predictDisease(file: File): Promise<PredictionResult> {
+export async function predictDisease(file: File, token: string | null = null): Promise<PredictionResult> {
     const formData = new FormData();
     formData.append('file', file);
 
+    const headers: Record<string, string> = {
+        'Content-Type': 'multipart/form-data',
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     try {
         const response = await axios.post(`${API_URL}/api/predict/`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
+            headers,
             timeout: 30000, // 30 second timeout
         });
 

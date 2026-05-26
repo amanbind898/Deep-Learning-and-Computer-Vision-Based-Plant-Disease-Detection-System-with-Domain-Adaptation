@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
 interface User {
   id: string
   name: string
@@ -37,12 +39,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUser = async (t: string) => {
     try {
-      const res = await fetch('/api/auth/me', {
+      const res = await fetch(`${API_URL}/api/auth/me`, {
         headers: { Authorization: `Bearer ${t}` },
       })
       if (res.ok) {
         const data = await res.json()
-        setUser(data.user)
+        setUser(data) // FastAPI returns UserResponse directly, not data.user
         setToken(t)
       } else {
         localStorage.removeItem('agrivision_token')
@@ -57,26 +59,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const login = async (email: string, password: string) => {
-    const res = await fetch('/api/auth/login', {
+    const res = await fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     })
     const data = await res.json()
-    if (!res.ok) throw new Error(data.error)
+    if (!res.ok) throw new Error(data.detail || data.error)
     localStorage.setItem('agrivision_token', data.token)
     setToken(data.token)
     setUser(data.user)
   }
 
   const signup = async (name: string, email: string, password: string) => {
-    const res = await fetch('/api/auth/signup', {
+    const res = await fetch(`${API_URL}/api/auth/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, password }),
     })
     const data = await res.json()
-    if (!res.ok) throw new Error(data.error)
+    if (!res.ok) throw new Error(data.detail || data.error)
     localStorage.setItem('agrivision_token', data.token)
     setToken(data.token)
     setUser(data.user)

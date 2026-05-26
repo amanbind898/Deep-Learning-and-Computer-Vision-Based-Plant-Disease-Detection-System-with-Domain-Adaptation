@@ -11,7 +11,8 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
 
-from api.routes import predict, chat
+from api.routes import predict, chat, auth, history
+from api.db import connect_db, disconnect_db
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -33,10 +34,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.on_event("startup")
+async def startup():
+    await connect_db()
+
+@app.on_event("shutdown")
+async def shutdown():
+    await disconnect_db()
+
 # Include routers
 app.include_router(predict.router, prefix="/api/predict", tags=["Prediction"])
 app.include_router(chat.router, prefix="/api/chat", tags=["Chatbot"])
-
+app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
+app.include_router(history.router, prefix="/api/history", tags=["History"])
 
 @app.get("/")
 async def root():
@@ -47,7 +57,8 @@ async def root():
         "endpoints": {
             "predict": "/api/predict/",
             "chat": "/api/chat/",
-
+            "auth": "/api/auth/",
+            "history": "/api/history/",
             "docs": "/docs"
         }
     }

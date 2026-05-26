@@ -133,15 +133,10 @@ No part of this work has been submitted to acquire any other Degree, Diploma, Fe
 \vspace{1cm}
 
 \noindent
-   Date: \submissionMonthYearMixed
-\hfill
-\studentOneName{} (\studentOneRoll)
-
-Place: \instituteShort \hfill  \studentTwoName{}   (\studentTwoRoll)
-
-\hfill \studentThreeName{} (\studentThreeRoll)
-
-\hfill \studentFourName{} (\studentFourRoll)
+Date: \submissionMonthYearMixed \hfill \studentOneName{} (\studentOneRoll)\\
+Place: \instituteShort \hfill \studentTwoName{} (\studentTwoRoll)\\
+\null \hfill \studentThreeName{} (\studentThreeRoll)\\
+\null \hfill \studentFourName{} (\studentFourRoll)
 \newpage
 
 \begin{center}
@@ -180,7 +175,7 @@ To the best of my knowledge, no part of this project report has been submitted f
 
 \chapter*{ACKNOWLEDGEMENT}
 \addcontentsline{toc}{chapter}{ACKNOWLEDGEMENT}
-With great pleasure, sincere gratitude and indebtedness are expressed to the project supervisor, \supervisorName, \supervisorDesignation, \departmentMixed, \instituteMixed. His vast academic knowledge, expert supervision, and continuous encouragement challenged and motivated the team to successfully achieve the project goals. 
+With great pleasure, sincere gratitude and indebtedness are expressed to the project supervisor, \supervisorName, \supervisorDesignation, \departmentMixed, \instituteMixed. Her vast academic knowledge, expert supervision, and continuous encouragement challenged and motivated the team to successfully achieve the project goals. 
 
 Sincere gratitude is also extended to \hodName, \hodDesignation, for providing valuable facilities, administrative support, and relevant guidance which enabled the completion of this work in a timely manner.
 
@@ -277,7 +272,7 @@ During the training cycles, data augmentation modified the training split to sto
 \section{Mixed-Domain Dataset Fusion Pipeline}
 Combining PlantVillage and PlantDoc presented a challenge because they used different naming rules for their class folders. A custom PyTorch dataset class, called MappedPlantDocDataset, was built to fix this issue. It maps the secondary dataset labels directly to the corresponding primary 38-class indices. 
 
-A mapping dictionary handled the conversions. It successfully aligned 26 of the 27 PlantDoc classes to their PlantVillage equivalents. One category, `Tomato mold leaf', had to be dropped because it did not have a matching biological class in the primary dataset. Once the mapping was complete, the two datasets were merged using PyTorch's ConcatDataset function. This fusion created a unified training set containing 56,536 images.
+A mapping dictionary handled the conversions. It successfully aligned 26 of the 27 PlantDoc classes to their PlantVillage equivalents. One category, `Tomato mold leaf', had to be dropped because it did not have a matching biological class in the primary dataset. Once the mapping was complete, the two datasets were merged using PyTorch's ConcatDataset function. This fusion created a unified training set containing 56,536 images, as summarized in Table~\ref{tab:dataset_distribution}.
 
 \begin{table}[h!]
 \centering
@@ -292,6 +287,7 @@ PlantDoc & Real-world Field, Noisy Background & 2,231 & 27 \\
 Merged Corpus & Mixed-Domain Dataset & 56,536 & 38 \\
 \bottomrule
 \end{tabular}
+\label{tab:dataset_distribution}
 \end{table}
 
 \section{Conclusion}
@@ -328,7 +324,7 @@ Using a standard $3\times3$ kernel as an example, this technique cuts the floati
 \subsection{Inverted Residual Block (AgriBlock)}
 The AgriBlock acts as the main computational unit for the network. It executes three steps in sequence. First, an expansion layer uses a pointwise convolution to increase the channel dimensions based on a specific expansion factor. Next, a depthwise layer applies spatial filtering on this larger feature space. Finally, a projection layer shrinks the filtered features back down to a smaller dimension. A linear bottleneck is maintained by omitting any non-linear activation after the projection step.
 
-A residual skip connection links the input of the block directly to the output. This only occurs if the stride equals 1 and the input channels match the output channels. The full network begins with a convolutional stem, followed by four AgriBlocks that gradually increase the channel depth. A Global Average Pooling layer, a Dropout layer set to 0.3, and a final fully connected classification layer complete the architecture.
+A residual skip connection links the input of the block directly to the output. This only occurs if the stride equals 1 and the input channels match the output channels. The full network begins with a convolutional stem, followed by four AgriBlocks that gradually increase the channel depth. A Global Average Pooling layer, a Dropout layer set to 0.3, and a final fully connected classification layer complete the architecture, as outlined in Table~\ref{tab:agrinet_layout}.
 
 \begin{table}[h!]
 \centering
@@ -347,6 +343,7 @@ Adaptive Avg Pool & $512\times14\times14$ & - & - \\
 FC Classifier & $512\times1\times1$ & - & - \\
 \bottomrule
 \end{tabular}
+\label{tab:agrinet_layout}
 \end{table}
 
 \section{Model Training Strategy}
@@ -383,22 +380,74 @@ Data Flow Diagrams show exactly how information moves through the application.
 
 At the context level (Level 0), the application acts as one main process communicating with the user and an external PDF database. Farmers upload leaf images and send disease questions. The system processes these inputs and returns class predictions, visual heatmaps, prediction logs, and text-based treatment advice. The PDF database acts as the static knowledge base.
 
-The Level 1 diagram breaks the system into three sub-processes. The authentication process handles logins and issues JWT tokens after checking the PostgreSQL database. The prediction process takes the uploaded image, runs it through AgriNet, creates a Grad-CAM heatmap, and logs the event in the database. The RAG chat process takes text queries, searches the FAISS index, and uses the LLM to generate a verified response.
+The Level 1 diagram breaks the system into three sub-processes. The authentication process handles logins and issues JWT tokens after checking the PostgreSQL database. The prediction process takes the uploaded image, runs it through AgriNet, creates a Grad-CAM heatmap, and logs the event in the database. The RAG chat process takes text queries, searches the FAISS index, and uses the LLM to generate a verified response. These DFD levels are illustrated in Figure~\ref{fig:dfd}.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{media/dataflowdiagram.png}
+    \caption{System Data Flow Diagram (DFD Level 0 and Level 1)}
+    \label{fig:dfd}
+\end{figure}
 
 \section{Project Architecture}
-The application runs on a decoupled client-server structure. The frontend layer relies on Next.js 14 and React. Custom CSS provides a glassmorphism style, using blurred overlays and semi-transparent backgrounds. Framer Motion manages the page transitions. The dashboard lets users upload photos, check their history, and chat with the RAG assistant.
+The system utilizes a decoupled client-server architecture. The frontend layer is implemented using Next.js 14 and React. It serves as a pure client and manages the presentation layer using custom vanilla CSS for glassmorphic visuals, with Framer Motion handling smooth layout transitions. 
 
-The backend API uses FastAPI built on Python. It handles HTTP requests asynchronously. Upon startup, the backend loads the mixed-domain weights and manages the classification and RAG pipelines. The database layer utilizes PostgreSQL to store user accounts and prediction histories, managed through the Prisma ORM.
+The backend layer is built using FastAPI on Python 3.11, handling all business logic, machine learning inference, and database interactions. The database layer utilizes PostgreSQL for persistent storage, integrated directly with the backend using the Python Prisma Client (\texttt{prisma-client-py}). User authentication is managed securely on the backend using JSON Web Tokens (JWT) and password hashing with Bcrypt, establishing a robust separation of concerns.
 
 \section{Database and Schema Design}
-The relational database tracks user logins and past predictions across two primary tables. The User table stores the unique ID, name, email, hashed password, and account creation timestamp. The Prediction table holds its own ID, a foreign key linking back to the user, the image path, the predicted disease name, the confidence score, and the exact time of the prediction.
+The relational database is configured with two primary models to track users and prediction logs. The specific structure and data types for these tables are detailed in Table~\ref{tab:user_schema} and Table~\ref{tab:prediction_schema}.
+
+\begin{itemize}
+    \item \textbf{User Table:} Stores the unique ID (\texttt{cuid}), user's name, email address (marked unique), Bcrypt-hashed password, and the account creation timestamp.
+    \item \textbf{Prediction Table:} Tracks crop scans and holds a unique prediction ID, a foreign key referencing the User ID (with cascade delete enabled), the identified plant name, the predicted disease name, the model's confidence score, a boolean flag indicating if the plant is healthy, a serialized JSON array representing the top-5 classification probabilities, and a serialized JSON object containing the treatment recommendations. Each record includes a timestamp of when the scan occurred.
+\end{itemize}
+
+\begin{table}[h!]
+\centering
+\caption{User Table Schema}
+\vspace{0.3cm}
+\begin{tabular}{llll}
+\toprule
+\textbf{Field} & \textbf{Data Type} & \textbf{Constraints} & \textbf{Description} \\
+\midrule
+id & String & Primary Key (\texttt{cuid()}) & Unique identifier for the user \\
+name & String & - & Full name of the user \\
+email & String & Unique & Email address (used for login) \\
+password & String & - & Bcrypt hashed password string \\
+createdAt & DateTime & Default (\texttt{now()}) & Timestamp of account registration \\
+\bottomrule
+\end{tabular}
+\label{tab:user_schema}
+\end{table}
+
+\begin{table}[h!]
+\centering
+\caption{Prediction Table Schema}
+\vspace{0.3cm}
+\begin{tabular}{llll}
+\toprule
+\textbf{Field} & \textbf{Data Type} & \textbf{Constraints} & \textbf{Description} \\
+\midrule
+id & String & Primary Key (\texttt{cuid()}) & Unique identifier for prediction record \\
+userId & String & Foreign Key (User.id) & ID of the user who scanned the leaf \\
+plantName & String & - & Name of the plant type (e.g., Tomato) \\
+diseaseName & String & - & Detected disease or healthy state \\
+confidence & Float & - & Confidence score (percentage value) \\
+isHealthy & Boolean & - & True if healthy, False if diseased \\
+topPredictions & String & Default (\texttt{[]}) & Serialized JSON string of top-5 predictions \\
+recommendations & String & Default (\texttt{\{\}}) & Serialized JSON string of treatment options \\
+createdAt & DateTime & Default (\texttt{now()}) & Timestamp of when prediction was logged \\
+\bottomrule
+\end{tabular}
+\label{tab:prediction_schema}
+\end{table}
 
 \section{Tech Stack and Requirements}
 The core languages used include Python 3.11 for the backend and TypeScript for the frontend UI. Key libraries involve PyTorch, Torchvision, LangChain, FAISS, Sentence-Transformers, FastAPI, and Prisma. The database runs on PostgreSQL 15 or newer.
 
 The minimum hardware needed to run inference includes an Intel i5 CPU, 8 GB of RAM, and an NVIDIA GTX 1050 Ti. For training the model, an Intel i7 or Ryzen 7 paired with an RTX 3060 and 16 GB of RAM is recommended. The actual training was completed on a local setup using an NVIDIA GeForce GTX 1650 with 4GB of VRAM.
 
-\sectionsection{Conclusion}
+\section{Conclusion}
 The system design provides a scalable architecture where frontend interactions, heavy deep learning inference, and database logs are handled by decoupled, dedicated services.
 
 \chapter{RESULT ANALYSIS AND DISCUSSION}
@@ -407,7 +456,7 @@ The system design provides a scalable architecture where frontend interactions, 
 The custom AgriNet model's performance was tracked across the base training phase and the mixed-domain fine-tuning phase.
 
 \subsection{Phase 1 Base Model Training Results}
-Training started on the clean PlantVillage dataset. The network converged rapidly, hitting a validation accuracy of 94.68\% by the second epoch. At Epoch 10, the model achieved its lowest validation loss of 0.0396 and a peak validation accuracy of 98.75\%. These numbers prove that Inverted Residual Blocks easily capture leaf disease traits when the background is controlled.
+Training started on the clean PlantVillage dataset. The network converged rapidly, hitting a validation accuracy of 94.68\% by the second epoch. At Epoch 10, the model achieved its lowest validation loss of 0.0396 and a peak validation accuracy of 98.75\%. These numbers prove that Inverted Residual Blocks easily capture leaf disease traits when the background is controlled, and the epoch-wise training metrics are detailed in Table~\ref{tab:phase1_metrics}.
 
 \begin{table}[h!]
 \centering
@@ -429,10 +478,11 @@ Training started on the clean PlantVillage dataset. The network converged rapidl
 10 & 0.0853 & 97.21\% & 0.0396 & 98.75\% \\
 \bottomrule
 \end{tabular}
+\label{tab:phase1_metrics}
 \end{table}
 
 \subsection{Phase 2 Mixed-Domain Fine-Tuning Results}
-The second phase introduced the noisy PlantDoc images. Adding real-world backgrounds and difficult lighting made the training harder, but the model stabilized quickly. By Epoch 9, the mixed-domain validation accuracy reached 96.14\%. This metric confirms the network successfully generalized to handle unpredictable field environments.
+The second phase introduced the noisy PlantDoc images. Adding real-world backgrounds and difficult lighting made the training harder, but the model stabilized quickly. By Epoch 9, the mixed-domain validation accuracy reached 96.14\%. This metric confirms the network successfully generalized to handle unpredictable field environments. The corresponding learning rates, losses, and validation accuracies are summarized in Table~\ref{tab:phase2_metrics}.
 
 \begin{table}[h!]
 \centering
@@ -454,10 +504,11 @@ The second phase introduced the noisy PlantDoc images. Adding real-world backgro
 10 & 0.1877 & 94.96\% & 0.1652 & 96.01\% \\
 \bottomrule
 \end{tabular}
+\label{tab:phase2_metrics}
 \end{table}
 
 \section{Performance Evaluation Metrics}
-Standard mathematical formulas were used to evaluate classification performance. Precision calculates the ratio of true positive predictions against all predicted positives. Recall calculates the ratio of true positive predictions against the actual positives in the dataset. The F1-Score takes the harmonic mean of both precision and recall. Testing the model on the combined validation set resulted in a weighted average of 0.99 for Precision, Recall, and the F1-Score. 
+Standard mathematical formulas were used to evaluate classification performance. Precision calculates the ratio of true positive predictions against all predicted positives. Recall calculates the ratio of true positive predictions against the actual positives in the dataset. The F1-Score takes the harmonic mean of both precision and recall. Testing the model on the combined validation set resulted in a weighted average of 0.99 for Precision, Recall, and the F1-Score. The detailed per-class predictions and errors are visualized in the confusion matrix in Figure~\ref{fig:confusion_matrix}.
 
 \begin{figure}[h!]
     \centering
@@ -467,7 +518,7 @@ Standard mathematical formulas were used to evaluate classification performance.
 \end{figure}
 
 \section{Zero-Shot Field Testing}
-To validate the real-world robustness of the proposed system, zero-shot field testing was conducted on entirely unseen images from local farms. Despite the presence of complex backgrounds and varying illumination, the model correctly identified the diseases, demonstrating strong generalization beyond the training distribution.
+To validate the real-world robustness of the proposed system, zero-shot field testing was conducted on entirely unseen images from local farms. Despite the presence of complex backgrounds and varying illumination, the model correctly identified the diseases, demonstrating strong generalization beyond the training distribution, with a sample prediction shown in Figure~\ref{fig:zeroshot_field_test}.
 
 \begin{figure}[h!]
     \centering
@@ -481,7 +532,7 @@ Gradient-weighted Class Activation Mapping (Grad-CAM) was added to ensure the pr
 \begin{equation}
 L^c_{\text{Grad-CAM}} = \text{ReLU}\left(\sum_k \alpha_k^c A^k\right)
 \end{equation}
-When this resulting heatmap is laid over the original image, it shows the model actively focusing on leaf lesions rather than background soil or shadows.
+When this resulting heatmap is laid over the original image, it shows the model actively focusing on leaf lesions rather than background soil or shadows, as demonstrated by the overlay heatmap in Figure~\ref{fig:gradcam}.
 
 \begin{figure}[h!]
     \centering

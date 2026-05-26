@@ -12,6 +12,8 @@ import { useAuth } from '@/contexts/AuthContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
 export default function PredictPage() {
   const { t } = useLanguage()
   const { token, isLoggedIn } = useAuth()
@@ -118,28 +120,10 @@ export default function PredictPage() {
     setError(null)
     setPrediction(null)
     try {
-      const result = await predictDisease(f)
+      const result = await predictDisease(f, token)
       setPrediction(result)
       setChatOpen(true)
-      setSaved(false)
-      // Auto-save to history if logged in
-      if (token) {
-        try {
-          await fetch('/api/history', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({
-              plantName: result.plant_name,
-              diseaseName: result.disease_name,
-              confidence: result.confidence,
-              isHealthy: result.is_healthy,
-              topPredictions: result.top_5_predictions,
-              recommendations: result.recommendations,
-            }),
-          })
-          setSaved(true)
-        } catch {}
-      }
+      setSaved(!!token)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Prediction failed')
     } finally {

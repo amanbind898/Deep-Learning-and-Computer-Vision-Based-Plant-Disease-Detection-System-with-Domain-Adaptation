@@ -18,6 +18,7 @@ export interface PredictionResult {
     preventive_measures?: string[]
     note?: string
   }
+  gradcam_image?: string
 }
 
 export interface ChatRequest {

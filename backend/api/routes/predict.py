@@ -3,10 +3,14 @@ from fastapi.responses import JSONResponse
 from PIL import Image
 import io
 import numpy as np
-from typing import List, Dict
+from typing import List, Dict, Optional
 import json
 import sys
 import os
+from fastapi import Depends
+from api.deps import get_current_user_optional
+from api.db import db
+from prisma.models import User
 
 # Add parent directory to path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -28,7 +32,10 @@ except Exception as e:
 
 
 @router.post("/")
-async def predict_disease(file: UploadFile = File(...)):
+async def predict_disease(
+    file: UploadFile = File(...),
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
     """
     Predict plant disease from uploaded image
     
@@ -77,6 +84,23 @@ async def predict_disease(file: UploadFile = File(...)):
         # Add recommendations to result
         result["recommendations"] = recommendations
         
+        # Save to database if user is authenticated
+        if current_user:
+            try:
+                await db.prediction.create(
+                    data={
+                        "userId": current_user.id,
+                        "plantName": result["plant_name"],
+                        "diseaseName": result["disease_name"],
+                        "confidence": result["confidence"],
+                        "isHealthy": result["is_healthy"],
+                        "topPredictions": json.dumps(result.get("top_5_predictions", [])),
+                        "recommendations": json.dumps(recommendations)
+                    }
+                )
+            except Exception as db_e:
+                print(f"Warning: Failed to save prediction to DB: {db_e}")
+                
         return JSONResponse(content=result)
     
     except Exception as e:
