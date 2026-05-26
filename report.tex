@@ -11,6 +11,7 @@
 \usepackage{hyperref}
 \usepackage{booktabs}
 \usepackage{caption} 
+\usepackage{float}
 
 % ==========================================
 % VARIABLE DECLARATIONS (Edit these to update the entire document)
@@ -274,7 +275,7 @@ Combining PlantVillage and PlantDoc presented a challenge because they used diff
 
 A mapping dictionary handled the conversions. It successfully aligned 26 of the 27 PlantDoc classes to their PlantVillage equivalents. One category, `Tomato mold leaf', had to be dropped because it did not have a matching biological class in the primary dataset. Once the mapping was complete, the two datasets were merged using PyTorch's ConcatDataset function. This fusion created a unified training set containing 56,536 images, as summarized in Table~\ref{tab:dataset_distribution}.
 
-\begin{table}[h!]
+\begin{table}[H]
 \centering
 \caption{Dataset Distribution and Class Mapping Summary}
 \vspace{0.3cm}
@@ -326,7 +327,7 @@ The AgriBlock serves as the core feature extraction unit of AgriNet, structured 
 
 An identity shortcut connection is introduced to sum the block input and output. This skip connection is only applied when the stride equals $1$ and the input channels match the output channels. The final network architecture consists of an initial convolutional stem, four sequential AgriBlocks with increasing channel depths, a Global Average Pooling layer, a Dropout layer (configured to $0.3$), and a final fully connected classification layer, as outlined in Table~\ref{tab:agrinet_layout}.
 
-\begin{table}[h!]
+\begin{table}[H]
 \centering
 \caption{AgriNet Architectural Layout}
 \vspace{0.3cm}
@@ -382,7 +383,7 @@ At the Context Level (Level 0), the system acts as a monolithic interface connec
 
 The Level 1 DFD decomposes the system into three primary processes: (i) user authentication, which verifies credentials and issues JWTs; (ii) image prediction, which processes uploads through AgriNet, computes Grad-CAM heatmaps, and saves logs to PostgreSQL; and (iii) the RAG chat loop, which routes user queries through the FAISS vector database and LLM APIs. Figure~\ref{fig:dfd} illustrates these DFD levels.
 
-\begin{figure}[h!]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{media/dataflowdiagram.png}
     \caption{System Data Flow Diagram (DFD Level 0 and Level 1)}
@@ -402,7 +403,7 @@ The relational database is configured with two primary models to track users and
     \item \textbf{Prediction Table:} Tracks crop scans and holds a unique prediction ID, a foreign key referencing the User ID (with cascade delete enabled), the identified plant name, the predicted disease name, the model's confidence score, a boolean flag indicating if the plant is healthy, a serialized JSON array representing the top-5 classification probabilities, and a serialized JSON object containing the treatment recommendations. Each record includes a timestamp of when the scan occurred.
 \end{itemize}
 
-\begin{table}[h!]
+\begin{table}[H]
 \centering
 \caption{User Table Schema}
 \vspace{0.3cm}
@@ -420,7 +421,7 @@ createdAt & DateTime & Default (\texttt{now()}) & Timestamp of account registrat
 \label{tab:user_schema}
 \end{table}
 
-\begin{table}[h!]
+\begin{table}[H]
 \centering
 \caption{Prediction Table Schema}
 \vspace{0.3cm}
@@ -458,7 +459,7 @@ We systematically tracked the performance of the custom AgriNet model during bot
 \subsection{Phase 1 Base Model Training Results}
 During the initial phase on the pristine PlantVillage corpus, the network exhibited rapid convergence, reaching a validation accuracy of $94.68\%$ by the second epoch. By the final epoch ($10$), the model attained its lowest validation loss of $0.0396$ and a peak validation accuracy of $98.75\%$. These results indicate that the Inverted Residual Blocks effectively extract core leaf features when background noise is minimized. The detailed epoch-by-epoch training progress is reported in Table~\ref{tab:phase1_metrics}.
 
-\begin{table}[h!]
+\begin{table}[H]
 \centering
 \caption{Phase 1 Training Metrics}
 \vspace{0.3cm}
@@ -484,7 +485,7 @@ During the initial phase on the pristine PlantVillage corpus, the network exhibi
 \subsection{Phase 2 Mixed-Domain Fine-Tuning Results}
 Phase 2 introduced the challenging, noisy PlantDoc images into the training pipeline. Although natural backgrounds, occlusion, and variable illumination increased training difficulty, the model converged within $9$ epochs, achieving a mixed-domain validation accuracy of $96.14\%$. This validates the effectiveness of our domain adaptation approach in handling natural field environments. Table~\ref{tab:phase2_metrics} provides the fine-tuning training metrics.
 
-\begin{table}[h!]
+\begin{table}[H]
 \centering
 \caption{Phase 2 Fine-Tuning Metrics}
 \vspace{0.3cm}
@@ -510,7 +511,7 @@ Phase 2 introduced the challenging, noisy PlantDoc images into the training pipe
 \section{Performance Evaluation Metrics}
 We evaluated classification performance using standard statistical metrics: Precision, Recall, and F1-score. Precision measures the ratio of true positive predictions to all predicted positives; Recall measures the ratio of true positives to all actual positive instances; and the F1-score is computed as their harmonic mean. On the combined validation dataset, the model achieved a weighted average of $0.99$ across all three metrics. The corresponding 38-class confusion matrix is illustrated in Figure~\ref{fig:confusion_matrix}.
 
-\begin{figure}[h!]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{media/confusion_matrix.png}
     \caption{Confusion Matrix for 38-Class Mixed-Domain Predictions}
@@ -520,7 +521,7 @@ We evaluated classification performance using standard statistical metrics: Prec
 \section{Zero-Shot Field Testing}
 To validate the real-world robustness of the proposed system, zero-shot field testing was conducted on entirely unseen images from local farms. Despite the presence of complex backgrounds and varying illumination, the model correctly identified the diseases, demonstrating strong generalization beyond the training distribution, with a sample prediction shown in Figure~\ref{fig:zeroshot_field_test}.
 
-\begin{figure}[h!]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{media/zero_shot_field_test.png}
     \caption{Zero-Shot Field Test Prediction on Unseen Data}
@@ -534,7 +535,7 @@ L^c_{\text{Grad-CAM}} = \text{ReLU}\left(\sum_k \alpha_k^c A^k\right)
 \end{equation}
 When this resulting heatmap is laid over the original image, it shows the model actively focusing on leaf lesions rather than background soil or shadows, as demonstrated by the overlay heatmap in Figure~\ref{fig:gradcam}.
 
-\begin{figure}[h!]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{media/gradcam_heatmap.png}
     \caption{Grad-CAM Heatmap Overlaid on Diseased Leaf}
