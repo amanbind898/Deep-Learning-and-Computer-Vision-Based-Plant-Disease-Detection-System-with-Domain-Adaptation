@@ -1,17 +1,21 @@
 'use client'
 
 import React, { useState, useRef, useCallback, useEffect } from 'react'
-import { Upload, Camera, X, Loader2, MessageSquare, ChevronRight, ChevronLeft } from 'lucide-react'
+import { Upload, Camera, X, Loader2, MessageSquare, ChevronRight, LogIn } from 'lucide-react'
 import { useDropzone } from 'react-dropzone'
-import Image from 'next/image'
 import PredictionCard from '@/components/PredictionCard'
 import ChatBotSidebar from '@/components/ChatBotSidebar'
 import { predictDisease } from '@/lib/api'
 import type { PredictionResult } from '@/types'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { useAuth } from '@/contexts/AuthContext'
+import { motion, AnimatePresence } from 'framer-motion'
+import Link from 'next/link'
 
 export default function PredictPage() {
   const { t } = useLanguage()
+  const { token, isLoggedIn } = useAuth()
+  const [saved, setSaved] = useState(false)
   const [activeTab, setActiveTab] = useState<'upload' | 'camera'>('upload')
   const [prediction, setPrediction] = useState<PredictionResult | null>(null)
   const [loading, setLoading] = useState(false)
@@ -20,29 +24,24 @@ export default function PredictPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [chatOpen, setChatOpen] = useState(false)
-  
+
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
-  // Effect to handle stream changes
   useEffect(() => {
     if (stream && videoRef.current) {
-      console.log('🔄 Stream changed, updating video element')
       videoRef.current.srcObject = stream
       videoRef.current.muted = true
       videoRef.current.play().catch(err => console.error('Play error:', err))
     }
   }, [stream])
 
-  // Image Upload
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
     if (file) {
       setSelectedFile(file)
       const reader = new FileReader()
-      reader.onloadend = () => {
-        setPreview(reader.result as string)
-      }
+      reader.onloadend = () => setPreview(reader.result as string)
       reader.readAsDataURL(file)
       setActiveTab('upload')
     }
@@ -50,75 +49,38 @@ export default function PredictPage() {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: {
-      'image/*': ['.jpeg', '.jpg', '.png']
-    },
+    accept: { 'image/*': ['.jpeg', '.jpg', '.png'] },
     multiple: false,
-    disabled: loading
+    disabled: loading,
   })
 
-  // Camera
   const startCamera = async () => {
     try {
       setError(null)
-      console.log('🎥 Starting camera...')
-      
-      // Check if mediaDevices is supported
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setError('Camera not supported in this browser. Please use Chrome, Firefox, or Safari.')
+        setError('Camera not supported in this browser.')
         return
       }
-
-      console.log('📹 Requesting camera access...')
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          facingMode: 'user', // Try 'user' first (front camera)
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        }
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
       })
-      
-      console.log('✅ Camera access granted')
-      console.log('Stream tracks:', mediaStream.getTracks())
-      
       setStream(mediaStream)
-      
-      // Use setTimeout to ensure video element is rendered
       setTimeout(() => {
         if (videoRef.current) {
-          console.log('📺 Setting video source...')
           videoRef.current.srcObject = mediaStream
           videoRef.current.muted = true
-          
           videoRef.current.onloadedmetadata = () => {
-            console.log('📹 Video metadata loaded')
-            videoRef.current?.play()
-              .then(() => console.log('▶️ Video playing'))
-              .catch(err => {
-                console.error('❌ Play error:', err)
-                setError('Failed to start video. Please refresh and try again.')
-              })
+            videoRef.current?.play().catch(err => setError('Failed to start video.'))
           }
-        } else {
-          console.error('❌ Video ref is null')
         }
       }, 100)
-      
     } catch (err: any) {
-      console.error('❌ Camera error:', err)
-      let errorMessage = 'Failed to access camera. '
-      
-      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        errorMessage += 'Please allow camera access in your browser settings.'
-      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-        errorMessage += 'No camera found on this device.'
-      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-        errorMessage += 'Camera is already in use by another application.'
-      } else {
-        errorMessage += 'Please check your camera permissions and try again.'
-      }
-      
-      setError(errorMessage)
+      let msg = 'Failed to access camera. '
+      if (err.name === 'NotAllowedError') msg += 'Please allow camera access.'
+      else if (err.name === 'NotFoundError') msg += 'No camera found.'
+      else if (err.name === 'NotReadableError') msg += 'Camera in use by another app.'
+      else msg += 'Check permissions and try again.'
+      setError(msg)
     }
   }
 
@@ -130,66 +92,54 @@ export default function PredictPage() {
   }
 
   const captureImage = async () => {
-    if (!videoRef.current || !canvasRef.current) {
-      setError('Camera not ready. Please try again.')
-      return
-    }
-
+    if (!videoRef.current || !canvasRef.current) { setError('Camera not ready.'); return }
     const video = videoRef.current
     const canvas = canvasRef.current
-    
-    // Check if video is playing
-    if (video.readyState !== video.HAVE_ENOUGH_DATA) {
-      setError('Video not ready. Please wait a moment and try again.')
-      return
-    }
-    
+    if (video.readyState !== video.HAVE_ENOUGH_DATA) { setError('Video not ready.'); return }
     const context = canvas.getContext('2d')
-    if (!context) {
-      setError('Canvas not supported.')
-      return
-    }
-
-    try {
-      // Set canvas size to video size
-      canvas.width = video.videoWidth || 640
-      canvas.height = video.videoHeight || 480
-      
-      // Draw video frame to canvas
-      context.drawImage(video, 0, 0, canvas.width, canvas.height)
-
-      // Convert to blob
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-          setError('Failed to capture image. Please try again.')
-          return
-        }
-
-        const file = new File([blob], 'capture.jpg', { type: 'image/jpeg' })
-        setSelectedFile(file)
-        setPreview(canvas.toDataURL())
-        stopCamera()
-        await handleAnalyze(file)
-      }, 'image/jpeg', 0.95)
-    } catch (err) {
-      console.error('Capture error:', err)
-      setError('Failed to capture image. Please try again.')
-    }
+    if (!context) return
+    canvas.width = video.videoWidth || 640
+    canvas.height = video.videoHeight || 480
+    context.drawImage(video, 0, 0, canvas.width, canvas.height)
+    canvas.toBlob(async (blob) => {
+      if (!blob) return
+      const file = new File([blob], 'capture.jpg', { type: 'image/jpeg' })
+      setSelectedFile(file)
+      setPreview(canvas.toDataURL())
+      stopCamera()
+      await handleAnalyze(file)
+    }, 'image/jpeg', 0.95)
   }
 
-  // Analyze
   const handleAnalyze = async (file?: File) => {
-    const fileToAnalyze = file || selectedFile
-    if (!fileToAnalyze) return
-
+    const f = file || selectedFile
+    if (!f) return
     setLoading(true)
     setError(null)
     setPrediction(null)
-
     try {
-      const result = await predictDisease(fileToAnalyze)
+      const result = await predictDisease(f)
       setPrediction(result)
-      setChatOpen(true) // Auto-open chat after prediction
+      setChatOpen(true)
+      setSaved(false)
+      // Auto-save to history if logged in
+      if (token) {
+        try {
+          await fetch('/api/history', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+              plantName: result.plant_name,
+              diseaseName: result.disease_name,
+              confidence: result.confidence,
+              isHealthy: result.is_healthy,
+              topPredictions: result.top_5_predictions,
+              recommendations: result.recommendations,
+            }),
+          })
+          setSaved(true)
+        } catch {}
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Prediction failed')
     } finally {
@@ -206,267 +156,267 @@ export default function PredictPage() {
   }
 
   return (
-    <div className="bg-gray-50 py-4 sm:py-8 px-2 sm:px-4">
-      <div className="container mx-auto max-w-7xl">
+    <div className="min-h-screen py-6 sm:py-10 px-4 relative animated-bg">
+      <div className="container mx-auto max-w-6xl relative z-10">
         {/* Header */}
-        <div className="text-center mb-4 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 sm:mb-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-8 sm:mb-12"
+        >
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-outfit font-bold text-emerald-50 mb-3">
             {t.predict.title}
           </h1>
-          <p className="text-base sm:text-lg text-gray-600">
+          <p className="text-emerald-200/50 text-base sm:text-lg">
             {t.predict.subtitle}
           </p>
-        </div>
+        </motion.div>
 
-        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
-          {/* Main Content */}
-          <div className={`flex-1 transition-all duration-300 ${chatOpen && prediction ? 'lg:mr-0' : ''}`}>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-              {/* Left Column - Upload/Camera */}
-              <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
-                {/* Tabs */}
-                <div className="flex gap-2 mb-6 border-b">
-                  <button
-                    onClick={() => {
-                      setActiveTab('upload')
-                      stopCamera()
-                    }}
-                    className={`flex items-center gap-2 px-4 py-2 font-medium transition-colors border-b-2 ${
-                      activeTab === 'upload'
-                        ? 'border-green-600 text-green-600'
-                        : 'border-transparent text-gray-600 hover:text-green-600'
-                    }`}
-                  >
-                    <Upload className="w-4 h-4" />
-                    {t.predict.uploadTab}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setActiveTab('camera')
-                      handleClear()
-                    }}
-                    className={`flex items-center gap-2 px-4 py-2 font-medium transition-colors border-b-2 ${
-                      activeTab === 'camera'
-                        ? 'border-green-600 text-green-600'
-                        : 'border-transparent text-gray-600 hover:text-green-600'
-                    }`}
-                  >
-                    <Camera className="w-4 h-4" />
-                    {t.predict.cameraTab}
-                  </button>
-                </div>
-
-                {/* Upload Tab */}
-                {activeTab === 'upload' && (
-                  <>
-                    {!preview ? (
-                      <div
-                        {...getRootProps()}
-                        className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors ${
-                          isDragActive
-                            ? 'border-green-500 bg-green-50'
-                            : 'border-gray-300 hover:border-green-400 hover:bg-gray-50'
-                        } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        <input {...getInputProps()} />
-                        <Upload className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                        {isDragActive ? (
-                          <p className="text-lg text-green-600">{t.predict.dragDrop}</p>
-                        ) : (
-                          <>
-                            <p className="text-lg text-gray-700 mb-2">
-                              {t.predict.dragDrop}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {t.predict.supports}
-                            </p>
-                          </>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <div className="relative rounded-lg overflow-hidden border-2 border-gray-200">
-                          <img
-                            src={preview || ''}
-                            alt="Preview"
-                            className="w-full h-auto max-h-96 object-contain"
-                          />
-                          {!loading && (
-                            <button
-                              onClick={handleClear}
-                              className="absolute top-2 right-2 bg-red-500 text-black p-2 rounded-full hover:bg-red-600 transition-colors"
-                            >
-                              <X className="w-5 h-5" />
-                            </button>
-                          )}
-                        </div>
-
-                        <button
-                          onClick={() => handleAnalyze()}
-                          disabled={loading}
-                          className={`w-full py-4 rounded-lg font-semibold text-lg transition-colors ${
-                            loading
-                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                              : 'bg-green-600 text-white hover:bg-green-700'
-                          }`}
-                        >
-                          {loading ? (
-                            <span className="flex items-center justify-center gap-2">
-                              <Loader2 className="w-5 h-5 animate-spin" />
-                              {t.predict.analyzing}
-                            </span>
-                          ) : (
-                            t.predict.analyze
-                          )}
-                        </button>
-
-                        {!loading && (
-                          <button
-                            onClick={handleClear}
-                            className="w-full py-3 rounded-lg font-medium text-gray-600 border-2 border-gray-300 hover:bg-gray-50 transition-colors"
-                          >
-                            {t.predict.uploadAnother}
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {/* Camera Tab */}
-                {activeTab === 'camera' && (
-                  <>
-                    {!stream && !preview ? (
-                      <div className="text-center py-12">
-                        <Camera className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                        <p className="text-gray-600 mb-6">
-                          {t.predict.startCamera}
-                        </p>
-                        <button
-                          onClick={startCamera}
-                          className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
-                        >
-                          {t.predict.startCamera}
-                        </button>
-                      </div>
-                    ) : stream ? (
-                      <div className="space-y-4">
-                        <div className="relative rounded-lg overflow-hidden bg-black">
-                          <video
-                            ref={videoRef}
-                            autoPlay
-                            playsInline
-                            muted
-                            className="w-full h-auto min-h-[300px]"
-                          />
-                          <button
-                            onClick={stopCamera}
-                            className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors"
-                          >
-                            <X className="w-5 h-5" />
-                          </button>
-                        </div>
-
-                        <button
-                          onClick={captureImage}
-                          disabled={loading}
-                          className={`w-full py-4 rounded-lg font-semibold text-lg transition-colors ${
-                            loading
-                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                              : 'bg-green-600 text-white hover:bg-green-700'
-                          }`}
-                        >
-                          {loading ? (
-                            <span className="flex items-center justify-center gap-2">
-                              <Loader2 className="w-5 h-5 animate-spin" />
-                              {t.predict.analyzing}
-                            </span>
-                          ) : (
-                            t.predict.capture
-                          )}
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <div className="relative rounded-lg overflow-hidden border-2 border-gray-200">
-                          <img
-                            src={preview || ''}
-                            alt="Captured"
-                            className="w-full h-auto max-h-96 object-contain"
-                          />
-                        </div>
-                        <button
-                          onClick={handleClear}
-                          className="w-full py-3 rounded-lg font-medium text-gray-600 border-2 border-gray-300 hover:bg-gray-50 transition-colors"
-                        >
-                          {t.predict.startCamera}
-                        </button>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {error && (
-                  <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-red-600">{error}</p>
-                  </div>
-                )}
-
-                <canvas ref={canvasRef} className="hidden" />
-              </div>
-
-              {/* Right Column - Results */}
-              <div>
-                {prediction ? (
-                  <PredictionCard prediction={prediction} />
-                ) : (
-                  <div className="bg-white rounded-lg shadow-md p-8 text-center">
-                    <p className="text-gray-500">
-                      {t.predict.uploadToSee}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Chatbot Sidebar */}
-          {prediction && (
-            <>
-              {/* Toggle Button */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left — Upload/Camera */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="glass-card p-6"
+          >
+            {/* Tabs */}
+            <div className="flex gap-1 mb-6 p-1 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
               <button
-                onClick={() => setChatOpen(!chatOpen)}
-                className="fixed right-0 top-1/2 -translate-y-1/2 bg-green-600 text-white p-3 rounded-l-lg shadow-lg hover:bg-green-700 transition-all z-40 lg:hidden"
-              >
-                {chatOpen ? <ChevronRight className="w-5 h-5" /> : <MessageSquare className="w-5 h-5" />}
-              </button>
-
-              {/* Sidebar */}
-              <div
-                className={`fixed lg:relative top-0 right-0 h-screen lg:h-auto bg-white shadow-2xl lg:shadow-md rounded-l-lg lg:rounded-lg transition-all duration-300 z-30 ${
-                  chatOpen ? 'translate-x-0 w-96' : 'translate-x-full lg:translate-x-0 lg:w-0 lg:opacity-0'
+                onClick={() => { setActiveTab('upload'); stopCamera() }}
+                id="tab-upload"
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-300 ${
+                  activeTab === 'upload'
+                    ? 'bg-emerald-500/15 text-emerald-300 shadow-sm'
+                    : 'text-emerald-200/50 hover:text-emerald-200'
                 }`}
               >
-                {chatOpen && (
-                  <ChatBotSidebar
-                    plantName={prediction.plant_name}
-                    diseaseName={prediction.disease_name}
-                    onClose={() => setChatOpen(false)}
-                  />
-                )}
-              </div>
+                <Upload className="w-4 h-4" />
+                {t.predict.uploadTab}
+              </button>
+              <button
+                onClick={() => { setActiveTab('camera'); handleClear() }}
+                id="tab-camera"
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-300 ${
+                  activeTab === 'camera'
+                    ? 'bg-emerald-500/15 text-emerald-300 shadow-sm'
+                    : 'text-emerald-200/50 hover:text-emerald-200'
+                }`}
+              >
+                <Camera className="w-4 h-4" />
+                {t.predict.cameraTab}
+              </button>
+            </div>
 
-              {/* Overlay for mobile */}
-              {chatOpen && (
-                <div
-                  className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
-                  onClick={() => setChatOpen(false)}
-                />
+            {/* Upload Tab */}
+            {activeTab === 'upload' && (
+              <>
+                {!preview ? (
+                  <div
+                    {...getRootProps()}
+                    className={`border-2 border-dashed rounded-xl p-10 sm:p-14 text-center cursor-pointer transition-all duration-300 ${
+                      isDragActive
+                        ? 'border-emerald-400 bg-emerald-500/10 pulse-ring'
+                        : 'border-emerald-500/20 hover:border-emerald-500/40 hover:bg-emerald-500/5'
+                    } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <input {...getInputProps()} />
+                    <div className="icon-circle w-16 h-16 mx-auto mb-4">
+                      <Upload className="w-7 h-7 text-emerald-400" />
+                    </div>
+                    <p className="text-emerald-200/70 text-base mb-2">{t.predict.dragDrop}</p>
+                    <p className="text-emerald-200/40 text-sm">{t.predict.supports}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="relative rounded-xl overflow-hidden border border-emerald-500/20">
+                      <img src={preview} alt="Preview" className="w-full h-auto max-h-80 object-contain bg-dark-800" />
+                      {!loading && (
+                        <button
+                          onClick={handleClear}
+                          className="absolute top-3 right-3 bg-red-500/80 backdrop-blur-sm text-white p-2 rounded-full hover:bg-red-500 transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleAnalyze()}
+                      disabled={loading}
+                      id="btn-analyze"
+                      className={`w-full py-4 rounded-xl font-semibold text-lg transition-all duration-300 ${
+                        loading
+                          ? 'bg-emerald-500/20 text-emerald-300/50 cursor-not-allowed'
+                          : 'glow-btn text-white'
+                      }`}
+                    >
+                      {loading ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          {t.predict.analyzing}
+                        </span>
+                      ) : t.predict.analyze}
+                    </button>
+                    {!loading && (
+                      <button
+                        onClick={handleClear}
+                        className="w-full py-3 rounded-xl font-medium text-emerald-200/60 border border-emerald-500/15 hover:bg-emerald-500/5 transition-all"
+                      >
+                        {t.predict.uploadAnother}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Camera Tab */}
+            {activeTab === 'camera' && (
+              <>
+                {!stream && !preview ? (
+                  <div className="text-center py-14">
+                    <div className="icon-circle w-16 h-16 mx-auto mb-4">
+                      <Camera className="w-7 h-7 text-emerald-400" />
+                    </div>
+                    <p className="text-emerald-200/50 mb-6">{t.predict.startCamera}</p>
+                    <button onClick={startCamera} className="glow-btn text-white px-6 py-3 rounded-xl font-semibold">
+                      {t.predict.startCamera}
+                    </button>
+                  </div>
+                ) : stream ? (
+                  <div className="space-y-4">
+                    <div className="relative rounded-xl overflow-hidden border border-emerald-500/20 bg-dark-800">
+                      <video ref={videoRef} autoPlay playsInline muted className="w-full h-auto min-h-[300px]" />
+                      <div className="absolute inset-0 pointer-events-none">
+                        <div className="absolute w-full h-0.5 bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent animate-scan-line" />
+                      </div>
+                      <button
+                        onClick={stopCamera}
+                        className="absolute top-3 right-3 bg-red-500/80 backdrop-blur-sm text-white p-2 rounded-full hover:bg-red-500 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <button
+                      onClick={captureImage}
+                      disabled={loading}
+                      id="btn-capture"
+                      className={`w-full py-4 rounded-xl font-semibold text-lg transition-all ${
+                        loading ? 'bg-emerald-500/20 text-emerald-300/50 cursor-not-allowed' : 'glow-btn text-white'
+                      }`}
+                    >
+                      {loading ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <Loader2 className="w-5 h-5 animate-spin" />{t.predict.analyzing}
+                        </span>
+                      ) : t.predict.capture}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="relative rounded-xl overflow-hidden border border-emerald-500/20">
+                      <img src={preview || ''} alt="Captured" className="w-full h-auto max-h-80 object-contain bg-dark-800" />
+                    </div>
+                    <button onClick={handleClear} className="w-full py-3 rounded-xl font-medium text-emerald-200/60 border border-emerald-500/15 hover:bg-emerald-500/5 transition-all">
+                      {t.predict.startCamera}
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Error */}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="mt-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20"
+                >
+                  <p className="text-red-400 text-sm">{error}</p>
+                </motion.div>
               )}
-            </>
-          )}
+            </AnimatePresence>
+
+            <canvas ref={canvasRef} className="hidden" />
+          </motion.div>
+
+          {/* Right — Results */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            {prediction ? (
+              <div>
+                <PredictionCard prediction={prediction} />
+
+                {/* Saved indicator */}
+                {saved && (
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-center text-emerald-400/60 text-xs mt-3"
+                  >
+                    ✓ Saved to your history
+                  </motion.p>
+                )}
+                {!isLoggedIn && prediction && (
+                  <p className="text-center text-emerald-200/30 text-xs mt-3">
+                    <Link href="/login" className="text-emerald-400 hover:underline">Login</Link> to save this to your history
+                  </p>
+                )}
+
+                {/* Chat toggle button */}
+                <button
+                  onClick={() => setChatOpen(!chatOpen)}
+                  className="w-full mt-4 py-3 rounded-xl font-medium text-emerald-200/70 border border-emerald-500/15 hover:bg-emerald-500/5 transition-all flex items-center justify-center gap-2"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  {chatOpen ? 'Close Chat' : 'Ask AI about this disease'}
+                </button>
+              </div>
+            ) : (
+              <div className="glass-card p-10 text-center">
+                <div className="icon-circle w-16 h-16 mx-auto mb-4">
+                  <Upload className="w-7 h-7 text-emerald-400/50" />
+                </div>
+                <p className="text-emerald-200/40">{t.predict.uploadToSee}</p>
+              </div>
+            )}
+          </motion.div>
         </div>
       </div>
+
+      {/* Chatbot Sidebar — Fixed overlay, doesn't affect page layout */}
+      <AnimatePresence>
+        {chatOpen && prediction && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-dark-900/60 backdrop-blur-sm z-40"
+              onClick={() => setChatOpen(false)}
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed top-0 right-0 h-screen w-full sm:w-96 z-50 shadow-2xl"
+            >
+              <ChatBotSidebar
+                plantName={prediction.plant_name}
+                diseaseName={prediction.disease_name}
+                onClose={() => setChatOpen(false)}
+              />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
+

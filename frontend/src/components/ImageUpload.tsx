@@ -3,7 +3,6 @@
 import { useCallback, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { Upload, X, Loader2 } from 'lucide-react'
-import Image from 'next/image'
 
 interface ImageUploadProps {
   onImageUpload: (file: File) => void
@@ -19,26 +18,20 @@ export default function ImageUpload({ onImageUpload, loading }: ImageUploadProps
     if (file) {
       setSelectedFile(file)
       const reader = new FileReader()
-      reader.onloadend = () => {
-        setPreview(reader.result as string)
-      }
+      reader.onloadend = () => setPreview(reader.result as string)
       reader.readAsDataURL(file)
     }
   }, [])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: {
-      'image/*': ['.jpeg', '.jpg', '.png']
-    },
+    accept: { 'image/*': ['.jpeg', '.jpg', '.png'] },
     multiple: false,
-    disabled: loading
+    disabled: loading,
   })
 
   const handleAnalyze = () => {
-    if (selectedFile) {
-      onImageUpload(selectedFile)
-    }
+    if (selectedFile) onImageUpload(selectedFile)
   }
 
   const handleClear = () => {
@@ -47,60 +40,50 @@ export default function ImageUpload({ onImageUpload, loading }: ImageUploadProps
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-bold text-gray-900 mb-4">Upload Image</h2>
+    <div className="glass-card p-6">
+      <h2 className="text-lg font-outfit font-semibold text-emerald-100 mb-4">Upload Image</h2>
 
       {!preview ? (
         <div
           {...getRootProps()}
-          className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors ${
+          className={`border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all duration-300 ${
             isDragActive
-              ? 'border-green-500 bg-green-50'
-              : 'border-gray-300 hover:border-green-400 hover:bg-gray-50'
+              ? 'border-emerald-400 bg-emerald-500/10 pulse-ring'
+              : 'border-emerald-500/20 hover:border-emerald-500/40 hover:bg-emerald-500/5'
           } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           <input {...getInputProps()} />
-          <Upload className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+          <div className="icon-circle w-14 h-14 mx-auto mb-4">
+            <Upload className="w-6 h-6 text-emerald-400" />
+          </div>
           {isDragActive ? (
-            <p className="text-lg text-green-600">Drop the image here...</p>
+            <p className="text-emerald-300 text-base">Drop the image here...</p>
           ) : (
             <>
-              <p className="text-lg text-gray-700 mb-2">
-                Drag & drop an image here, or click to select
-              </p>
-              <p className="text-sm text-gray-500">
-                Supports: JPG, JPEG, PNG
-              </p>
+              <p className="text-emerald-200/60 text-base mb-1">Drag & drop an image here, or click to select</p>
+              <p className="text-emerald-200/40 text-sm">Supports: JPG, JPEG, PNG</p>
             </>
           )}
         </div>
       ) : (
         <div className="space-y-4">
-          {/* Image Preview */}
-          <div className="relative rounded-lg overflow-hidden border-2 border-gray-200">
-            <img
-              src={preview}
-              alt="Preview"
-              className="w-full h-auto max-h-96 object-contain"
-            />
+          <div className="relative rounded-xl overflow-hidden border border-emerald-500/20">
+            <img src={preview} alt="Preview" className="w-full h-auto max-h-96 object-contain bg-dark-800" />
             {!loading && (
               <button
                 onClick={handleClear}
-                className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors"
+                className="absolute top-3 right-3 bg-red-500/80 backdrop-blur-sm text-white p-2 rounded-full hover:bg-red-500 transition-colors"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             )}
           </div>
 
-          {/* Analyze Button */}
           <button
             onClick={handleAnalyze}
             disabled={loading}
-            className={`w-full py-4 rounded-lg font-semibold text-lg transition-colors ${
-              loading
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-green-600 text-white hover:bg-green-700'
+            className={`w-full py-4 rounded-xl font-semibold text-lg transition-all ${
+              loading ? 'bg-emerald-500/20 text-emerald-300/50 cursor-not-allowed' : 'glow-btn text-white'
             }`}
           >
             {loading ? (
@@ -108,16 +91,13 @@ export default function ImageUpload({ onImageUpload, loading }: ImageUploadProps
                 <Loader2 className="w-5 h-5 animate-spin" />
                 Analyzing...
               </span>
-            ) : (
-              'Analyze Image'
-            )}
+            ) : 'Analyze Image'}
           </button>
 
-          {/* Upload Another */}
           {!loading && (
             <button
               onClick={handleClear}
-              className="w-full py-3 rounded-lg font-medium text-gray-600 border-2 border-gray-300 hover:bg-gray-50 transition-colors"
+              className="w-full py-3 rounded-xl font-medium text-emerald-200/60 border border-emerald-500/15 hover:bg-emerald-500/5 transition-all"
             >
               Upload Another Image
             </button>

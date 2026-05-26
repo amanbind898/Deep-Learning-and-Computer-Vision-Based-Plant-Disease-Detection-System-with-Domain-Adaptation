@@ -1,12 +1,15 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Camera, X, Loader2 } from 'lucide-react'
+import { Camera, X, Loader2, Info } from 'lucide-react'
 import PredictionCard from '@/components/PredictionCard'
 import { predictDisease } from '@/lib/api'
 import type { PredictionResult } from '@/types'
+import { motion } from 'framer-motion'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function DemoPage() {
+  const { language } = useLanguage()
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [prediction, setPrediction] = useState<PredictionResult | null>(null)
   const [loading, setLoading] = useState(false)
@@ -17,14 +20,14 @@ export default function DemoPage() {
   const startCamera = async () => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
+        video: { facingMode: 'environment' },
       })
       setStream(mediaStream)
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream
       }
       setError(null)
-    } catch (err) {
+    } catch {
       setError('Failed to access camera. Please check permissions.')
     }
   }
@@ -38,27 +41,17 @@ export default function DemoPage() {
 
   const captureImage = async () => {
     if (!videoRef.current || !canvasRef.current) return
-
     const video = videoRef.current
     const canvas = canvasRef.current
     const context = canvas.getContext('2d')
-
     if (!context) return
-
-    // Set canvas size to video size
     canvas.width = video.videoWidth
     canvas.height = video.videoHeight
-
-    // Draw video frame to canvas
     context.drawImage(video, 0, 0, canvas.width, canvas.height)
-
-    // Convert canvas to blob
     canvas.toBlob(async (blob) => {
       if (!blob) return
-
       setLoading(true)
       setError(null)
-
       try {
         const file = new File([blob], 'capture.jpg', { type: 'image/jpeg' })
         const result = await predictDisease(file)
@@ -78,136 +71,148 @@ export default function DemoPage() {
     startCamera()
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
-      <div className="container mx-auto max-w-6xl">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Live Camera Detection
-          </h1>
-          <p className="text-lg text-gray-600">
-            Use your camera to detect plant diseases in real-time
-          </p>
-        </div>
+  const tips = language === 'hi'
+    ? ['अच्छी रोशनी सुनिश्चित करें', 'एक पत्ती पर ध्यान केंद्रित करें', 'कैमरा स्थिर रखें', 'छाया और प्रतिबिंब से बचें']
+    : ['Ensure good lighting conditions', 'Focus on a single leaf with clear symptoms', 'Hold the camera steady and close', 'Avoid shadows and reflections']
 
-        <div className="grid lg:grid-cols-2 gap-8">
+  return (
+    <div className="min-h-screen py-8 sm:py-12 px-4 relative animated-bg">
+      <div className="container mx-auto max-w-6xl relative z-10">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-10"
+        >
+          <h1 className="text-3xl sm:text-4xl font-outfit font-bold text-emerald-50 mb-3">
+            {language === 'hi' ? 'लाइव कैमरा पहचान' : 'Live Camera Detection'}
+          </h1>
+          <p className="text-emerald-200/50 text-base">
+            {language === 'hi' ? 'रीयल-टाइम में पौधों की बीमारियों का पता लगाएं' : 'Detect plant diseases in real-time using your camera'}
+          </p>
+        </motion.div>
+
+        <div className="grid lg:grid-cols-2 gap-6">
           {/* Camera Section */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Camera</h2>
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="glass-card p-6"
+          >
+            <h2 className="text-lg font-outfit font-semibold text-emerald-100 mb-4">
+              {language === 'hi' ? 'कैमरा' : 'Camera'}
+            </h2>
 
             {!stream && !prediction && (
-              <div className="text-center py-12">
-                <Camera className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                <p className="text-gray-600 mb-6">
-                  Start your camera to capture plant images
+              <div className="text-center py-14">
+                <div className="icon-circle w-16 h-16 mx-auto mb-4">
+                  <Camera className="w-7 h-7 text-emerald-400" />
+                </div>
+                <p className="text-emerald-200/50 mb-6">
+                  {language === 'hi' ? 'कैमरा शुरू करें' : 'Start your camera to capture plant images'}
                 </p>
-                <button
-                  onClick={startCamera}
-                  className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
-                >
-                  Start Camera
+                <button onClick={startCamera} id="demo-start-camera" className="glow-btn text-white px-6 py-3 rounded-xl font-semibold">
+                  {language === 'hi' ? 'कैमरा शुरू करें' : 'Start Camera'}
                 </button>
               </div>
             )}
 
             {stream && (
               <div className="space-y-4">
-                <div className="relative rounded-lg overflow-hidden bg-black">
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    className="w-full h-auto"
-                  />
+                <div className="relative rounded-xl overflow-hidden border border-emerald-500/20 bg-dark-800">
+                  <video ref={videoRef} autoPlay playsInline className="w-full h-auto" />
+                  <div className="absolute inset-0 pointer-events-none">
+                    <div className="absolute w-full h-0.5 bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent animate-scan-line" />
+                  </div>
                   <button
                     onClick={stopCamera}
-                    className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors"
+                    className="absolute top-3 right-3 bg-red-500/80 backdrop-blur-sm text-white p-2 rounded-full hover:bg-red-500 transition-colors"
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
-
                 <button
                   onClick={captureImage}
                   disabled={loading}
-                  className={`w-full py-4 rounded-lg font-semibold text-lg transition-colors ${
-                    loading
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-green-600 text-white hover:bg-green-700'
+                  id="demo-capture"
+                  className={`w-full py-4 rounded-xl font-semibold text-lg transition-all ${
+                    loading ? 'bg-emerald-500/20 text-emerald-300/50 cursor-not-allowed' : 'glow-btn text-white'
                   }`}
                 >
                   {loading ? (
                     <span className="flex items-center justify-center gap-2">
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      Analyzing...
+                      {language === 'hi' ? 'विश्लेषण...' : 'Analyzing...'}
                     </span>
-                  ) : (
-                    'Capture & Analyze'
-                  )}
+                  ) : (language === 'hi' ? 'कैप्चर और विश्लेषण' : 'Capture & Analyze')}
                 </button>
               </div>
             )}
 
             {prediction && (
-              <div className="text-center py-8">
-                <p className="text-gray-600 mb-4">
-                  Image captured and analyzed successfully!
+              <div className="text-center py-10">
+                <p className="text-emerald-200/50 mb-4">
+                  {language === 'hi' ? 'छवि सफलतापूर्वक विश्लेषित!' : 'Image captured and analyzed!'}
                 </p>
-                <button
-                  onClick={reset}
-                  className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
-                >
-                  Capture Another
+                <button onClick={reset} className="glow-btn text-white px-6 py-3 rounded-xl font-semibold">
+                  {language === 'hi' ? 'दूसरा कैप्चर करें' : 'Capture Another'}
                 </button>
               </div>
             )}
 
             {error && (
-              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-600">{error}</p>
+              <div className="mt-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
+                <p className="text-red-400 text-sm">{error}</p>
               </div>
             )}
 
-            {/* Hidden canvas for capture */}
             <canvas ref={canvasRef} className="hidden" />
-          </div>
+          </motion.div>
 
-          {/* Results Section */}
-          <div>
-            {prediction && <PredictionCard prediction={prediction} />}
-
-            {!prediction && !loading && (
-              <div className="bg-white rounded-lg shadow-md p-8 text-center">
-                <p className="text-gray-500">
-                  Capture an image to see prediction results
+          {/* Results */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            {prediction ? (
+              <PredictionCard prediction={prediction} />
+            ) : (
+              <div className="glass-card p-10 text-center">
+                <div className="icon-circle w-16 h-16 mx-auto mb-4">
+                  <Camera className="w-7 h-7 text-emerald-400/50" />
+                </div>
+                <p className="text-emerald-200/40">
+                  {language === 'hi' ? 'परिणाम देखने के लिए छवि कैप्चर करें' : 'Capture an image to see prediction results'}
                 </p>
               </div>
             )}
-          </div>
+          </motion.div>
         </div>
 
-        {/* Instructions */}
-        <div className="mt-12 bg-blue-50 rounded-lg p-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Tips for Best Results</h3>
-          <ul className="space-y-2 text-gray-700">
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 mt-1">•</span>
-              <span>Ensure good lighting conditions</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 mt-1">•</span>
-              <span>Focus on a single leaf with clear symptoms</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 mt-1">•</span>
-              <span>Hold the camera steady and close to the leaf</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 mt-1">•</span>
-              <span>Avoid shadows and reflections</span>
-            </li>
+        {/* Tips */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mt-8 glass-card p-6"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <Info className="w-5 h-5 text-emerald-400" />
+            <h3 className="text-base font-outfit font-semibold text-emerald-100">
+              {language === 'hi' ? 'सर्वोत्तम परिणामों के लिए सुझाव' : 'Tips for Best Results'}
+            </h3>
+          </div>
+          <ul className="grid sm:grid-cols-2 gap-2">
+            {tips.map((tip, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-emerald-200/50">
+                <span className="text-emerald-400/60 mt-0.5">▸</span>
+                {tip}
+              </li>
+            ))}
           </ul>
-        </div>
+        </motion.div>
       </div>
     </div>
   )

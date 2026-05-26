@@ -18,8 +18,14 @@ from utils.recommendations import get_treatment_recommendations
 
 router = APIRouter()
 
-# Initialize model
-model = DiseaseModel()
+# Initialize model (gracefully handle missing model file)
+model = None
+try:
+    model = DiseaseModel()
+except Exception as e:
+    print(f"⚠️  Model not loaded: {e}")
+    print("⚠️  Prediction endpoint will be unavailable. Place agrinet_mixed_v1.pth in ml-training/models/ and restart.")
+
 
 @router.post("/")
 async def predict_disease(file: UploadFile = File(...)):
@@ -36,6 +42,9 @@ async def predict_disease(file: UploadFile = File(...)):
     - recommendations: Treatment suggestions
     """
     try:
+        if model is None:
+            raise HTTPException(status_code=503, detail="Model not loaded. Place agrinet_mixed_v1.pth in ml-training/models/ and restart the server.")
+        
         # Validate file type
         if not file.content_type.startswith("image/"):
             raise HTTPException(status_code=400, detail="File must be an image")
@@ -77,15 +86,15 @@ async def predict_disease(file: UploadFile = File(...)):
 async def get_classes():
     """Get all supported plant disease classes"""
     return {
-        "classes": model.class_names,
-        "total": len(model.class_names)
+        "classes": DiseaseModel.CLASS_NAMES,
+        "total": len(DiseaseModel.CLASS_NAMES)
     }
 
 @router.get("/supported-plants")
 async def get_supported_plants():
     """Get list of supported plant types"""
     plants = set()
-    for class_name in model.class_names:
+    for class_name in DiseaseModel.CLASS_NAMES:
         plant = class_name.split("___")[0].replace("_", " ")
         plants.add(plant)
     

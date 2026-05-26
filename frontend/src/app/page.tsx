@@ -1,134 +1,118 @@
 'use client'
 
 import Link from 'next/link'
-import { Leaf, Camera, MessageSquare, Globe, TrendingUp, Shield, Sparkles, CheckCircle, ArrowRight } from 'lucide-react'
+import { Leaf, Camera, MessageSquare, Globe, TrendingUp, Shield, Sparkles, ArrowRight, Cpu, BookOpen } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useLanguage } from '@/contexts/LanguageContext'
 
+const fadeInUp = {
+  initial: { opacity: 0, y: 30 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.6 } },
+}
+
+const stagger = {
+  animate: { transition: { staggerChildren: 0.1 } },
+}
+
 export default function Home() {
   const { t } = useLanguage()
-  
+
   const features = [
-    {
-      icon: <Camera className="w-8 h-8" />,
-      title: t.home.features.aiDetection.title,
-      description: t.home.features.aiDetection.desc
-    },
-    {
-      icon: <MessageSquare className="w-8 h-8" />,
-      title: t.home.features.chatbot.title,
-      description: t.home.features.chatbot.desc
-    },
-    {
-      icon: <Globe className="w-8 h-8" />,
-      title: t.home.features.multilingual.title,
-      description: t.home.features.multilingual.desc
-    },
-    {
-      icon: <TrendingUp className="w-8 h-8" />,
-      title: t.home.features.treatment.title,
-      description: t.home.features.treatment.desc
-    },
-    {
-      icon: <Shield className="w-8 h-8" />,
-      title: t.home.features.explainable.title,
-      description: t.home.features.explainable.desc
-    },
-    {
-      icon: <Leaf className="w-8 h-8" />,
-      title: t.home.features.plants.title,
-      description: t.home.features.plants.desc
-    }
+    { icon: <Cpu className="w-6 h-6" />, title: t.home.features.aiDetection.title, description: t.home.features.aiDetection.desc },
+    { icon: <BookOpen className="w-6 h-6" />, title: t.home.features.chatbot.title, description: t.home.features.chatbot.desc },
+    { icon: <Globe className="w-6 h-6" />, title: t.home.features.multilingual.title, description: t.home.features.multilingual.desc },
+    { icon: <TrendingUp className="w-6 h-6" />, title: t.home.features.treatment.title, description: t.home.features.treatment.desc },
+    { icon: <Shield className="w-6 h-6" />, title: t.home.features.explainable.title, description: t.home.features.explainable.desc },
+    { icon: <Leaf className="w-6 h-6" />, title: t.home.features.plants.title, description: t.home.features.plants.desc },
   ]
-  
+
   const steps = [
-    { 
-      step: '1', 
-      title: t.home.steps.upload.title, 
-      desc: t.home.steps.upload.desc 
-    },
-    { 
-      step: '2', 
-      title: t.home.steps.analyze.title, 
-      desc: t.home.steps.analyze.desc 
-    },
-    { 
-      step: '3', 
-      title: t.home.steps.results.title, 
-      desc: t.home.steps.results.desc 
-    }
+    { step: '01', title: t.home.steps.upload.title, desc: t.home.steps.upload.desc, icon: <Camera className="w-6 h-6" /> },
+    { step: '02', title: t.home.steps.analyze.title, desc: t.home.steps.analyze.desc, icon: <Cpu className="w-6 h-6" /> },
+    { step: '03', title: t.home.steps.results.title, desc: t.home.steps.results.desc, icon: <TrendingUp className="w-6 h-6" /> },
   ]
-  
+
   const stats = [
-    { value: '96%', label: t.home.stats.accuracy },
-    { value: '38+', label: t.home.stats.diseases },
-    { value: '12+', label: t.home.stats.plants },
-    { value: '70K+', label: t.home.stats.images }
+    { value: '96.1%', label: t.home.stats.accuracy },
+    { value: '38', label: t.home.stats.diseases },
+    { value: '14', label: t.home.stats.plants },
+    { value: '70K+', label: t.home.stats.images },
   ]
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 py-12 sm:py-16 md:py-24 px-4 overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 w-72 h-72 bg-green-400 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-emerald-400 rounded-full blur-3xl"></div>
-        </div>
-        
-        <div className="container mx-auto max-w-6xl relative z-10">
+      {/* ═══════════ HERO SECTION ═══════════ */}
+      <section className="relative py-20 sm:py-28 md:py-36 px-4 overflow-hidden animated-bg">
+        {/* Floating particles */}
+        {[...Array(6)].map((_, i) => (
+          <div
+            key={i}
+            className="particle bg-emerald-400/30"
+            style={{
+              width: `${4 + i * 3}px`,
+              height: `${4 + i * 3}px`,
+              left: `${10 + i * 15}%`,
+              animationDuration: `${12 + i * 4}s`,
+              animationDelay: `${i * 2}s`,
+            }}
+          />
+        ))}
+
+        {/* Ambient glow orbs */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-teal-500/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="container mx-auto max-w-5xl relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.8 }}
             className="text-center"
           >
-            {/* Logo with Animation */}
-            <motion.div 
-              className="flex justify-center mb-6"
-              animate={{ 
-                scale: [1, 1.1, 1],
-                rotate: [0, 5, -5, 0]
-              }}
-              transition={{ 
-                duration: 3,
-                repeat: Infinity,
-                repeatDelay: 2
-              }}
+            {/* Badge */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card text-emerald-300/80 text-sm font-medium mb-8"
             >
-              <div className="bg-white p-4 rounded-full shadow-lg">
-                <Leaf className="w-16 h-16 text-green-600" />
-              </div>
+              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              AgriNet Custom CNN — 98.75% Lab Accuracy
             </motion.div>
-            
-            <motion.h1 
-              className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold text-gray-900 mb-4 sm:mb-6 px-2"
+
+            {/* Heading */}
+            <motion.h1
+              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-outfit font-bold mb-6 leading-tight"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              {t.home.title}
+              <span className="text-emerald-50">{t.home.title.split(' ').slice(0, 2).join(' ')} </span>
+              <span className="gradient-text">{t.home.title.split(' ').slice(2).join(' ')}</span>
             </motion.h1>
-            
-            <motion.p 
-              className="text-lg sm:text-xl md:text-2xl text-gray-700 mb-3 sm:mb-4 font-semibold px-2"
+
+            {/* Subtitle */}
+            <motion.p
+              className="text-lg sm:text-xl text-emerald-200/70 mb-4 font-medium"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
             >
               {t.home.subtitle}
             </motion.p>
-            
-            <motion.p 
-              className="text-base sm:text-lg text-gray-600 mb-6 sm:mb-10 max-w-3xl mx-auto leading-relaxed px-4"
+
+            {/* Description */}
+            <motion.p
+              className="text-base text-emerald-200/50 mb-10 max-w-2xl mx-auto leading-relaxed px-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
             >
               {t.home.description}
             </motion.p>
-            
-            <motion.div 
+
+            {/* CTA Buttons */}
+            <motion.div
               className="flex flex-col sm:flex-row gap-4 justify-center"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -136,15 +120,18 @@ export default function Home() {
             >
               <Link
                 href="/predict"
-                className="group bg-green-600 text-white px-8 py-4 rounded-xl font-semibold hover:bg-green-700 transition-all text-lg shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                id="hero-cta-detect"
+                className="group glow-btn text-white px-8 py-4 rounded-xl font-semibold text-lg flex items-center justify-center gap-2"
               >
                 {t.home.startDetection}
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link
                 href="/chat"
-                className="bg-white text-green-600 px-8 py-4 rounded-xl font-semibold hover:bg-gray-50 transition-all border-2 border-green-600 text-lg shadow-lg hover:shadow-xl"
+                id="hero-cta-chat"
+                className="glass-card-hover px-8 py-4 rounded-xl font-semibold text-emerald-200 text-lg flex items-center justify-center gap-2 hover:text-emerald-100"
               >
+                <MessageSquare className="w-5 h-5" />
                 {t.home.liveDemo}
               </Link>
             </motion.div>
@@ -152,98 +139,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-10 sm:py-16 md:py-20 px-4 bg-white">
-        <div className="container mx-auto max-w-6xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              {t.home.powerfulFeatures}
-            </h2>
-            <div className="w-24 h-1 bg-green-600 mx-auto rounded-full"></div>
-          </motion.div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                className="group p-8 rounded-2xl border-2 border-gray-200 hover:border-green-500 hover:shadow-2xl transition-all bg-gradient-to-br from-white to-green-50/30"
-              >
-                <div className="text-green-600 mb-4 transform group-hover:scale-110 transition-transform">
-                  {feature.icon}
-                </div>
-                <h3 className="text-xl font-bold mb-3 text-gray-900">
-                  {feature.title}
-                </h3>
-                <p className="text-gray-600 leading-relaxed">{feature.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="py-10 sm:py-16 md:py-20 px-4 bg-gradient-to-br from-gray-50 to-green-50/30">
-        <div className="container mx-auto max-w-6xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              {t.home.howItWorks}
-            </h2>
-            <div className="w-24 h-1 bg-green-600 mx-auto rounded-full"></div>
-          </motion.div>
-          
-          <div className="grid md:grid-cols-3 gap-12">
-            {steps.map((item, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: index * 0.2 }}
-                viewport={{ once: true }}
-                className="text-center relative"
-              >
-                {/* Connector Line */}
-                {index < steps.length - 1 && (
-                  <div className="hidden md:block absolute top-8 left-[60%] w-[80%] h-0.5 bg-green-300"></div>
-                )}
-                
-                <motion.div 
-                  className="w-20 h-20 bg-gradient-to-br from-green-600 to-emerald-600 text-white rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-6 shadow-lg relative z-10"
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                >
-                  {item.step}
-                </motion.div>
-                <h3 className="text-2xl font-bold mb-3 text-gray-900">{item.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{item.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-10 sm:py-16 md:py-20 px-4 bg-gradient-to-br from-green-600 to-emerald-700 text-white relative overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-        </div>
-        
-        <div className="container mx-auto max-w-6xl relative z-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8 text-center">
+      {/* ═══════════ STATS BAR ═══════════ */}
+      <section className="relative py-8 border-y border-emerald-500/10">
+        <div className="container mx-auto max-w-5xl px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             {stats.map((stat, index) => (
               <motion.div
                 key={index}
@@ -251,39 +150,135 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 viewport={{ once: true }}
-                className="p-3 sm:p-6"
+                className="py-2"
               >
-                <motion.div 
-                  className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-2 sm:mb-3"
-                  whileHover={{ scale: 1.1 }}
-                >
+                <div className="text-3xl sm:text-4xl md:text-5xl font-outfit font-bold gradient-text stat-glow mb-1">
                   {stat.value}
-                </motion.div>
-                <div className="text-green-100 text-base sm:text-lg md:text-xl font-medium">{stat.label}</div>
+                </div>
+                <div className="text-emerald-200/50 text-sm font-medium uppercase tracking-wider">
+                  {stat.label}
+                </div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-12 sm:py-16 md:py-24 px-4 bg-gradient-to-br from-white to-green-50">
-        <div className="container mx-auto max-w-4xl text-center">
+      {/* ═══════════ FEATURES SECTION ═══════════ */}
+      <section className="py-20 sm:py-28 px-4 relative">
+        <div className="absolute top-0 right-0 w-72 h-72 bg-emerald-500/3 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="container mx-auto max-w-6xl relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-outfit font-bold text-emerald-50 mb-4">
+              {t.home.powerfulFeatures}
+            </h2>
+            <div className="w-20 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 mx-auto rounded-full" />
+          </motion.div>
+
+          <motion.div
+            variants={stagger}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true }}
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-5"
+          >
+            {features.map((feature, index) => (
+              <motion.div
+                key={index}
+                variants={fadeInUp}
+                className="glass-card-hover p-7 group"
+              >
+                <div className="icon-circle w-12 h-12 mb-5 group-hover:shadow-lg group-hover:shadow-emerald-500/20 transition-shadow duration-300">
+                  <span className="text-emerald-400">{feature.icon}</span>
+                </div>
+                <h3 className="text-lg font-outfit font-semibold text-emerald-100 mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-emerald-200/50 text-sm leading-relaxed">
+                  {feature.description}
+                </p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ═══════════ HOW IT WORKS ═══════════ */}
+      <section className="py-20 sm:py-28 px-4 relative border-t border-emerald-500/10">
+        <div className="container mx-auto max-w-5xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-outfit font-bold text-emerald-50 mb-4">
+              {t.home.howItWorks}
+            </h2>
+            <div className="w-20 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 mx-auto rounded-full" />
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {steps.map((item, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.2 }}
+                viewport={{ once: true }}
+                className="relative text-center"
+              >
+                {/* Connector line */}
+                {index < steps.length - 1 && (
+                  <div className="hidden md:block absolute top-10 left-[60%] w-[80%] h-px bg-gradient-to-r from-emerald-500/30 to-transparent" />
+                )}
+
+                {/* Step number circle */}
+                <motion.div
+                  className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/10 border border-emerald-500/30 flex items-center justify-center relative z-10"
+                  whileHover={{ scale: 1.1, boxShadow: '0 0 30px rgba(16,185,129,0.3)' }}
+                >
+                  <span className="text-emerald-400">{item.icon}</span>
+                  <span className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center">
+                    {item.step}
+                  </span>
+                </motion.div>
+
+                <h3 className="text-xl font-outfit font-semibold text-emerald-100 mb-2">{item.title}</h3>
+                <p className="text-emerald-200/50 text-sm leading-relaxed max-w-xs mx-auto">{item.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════ CTA SECTION ═══════════ */}
+      <section className="py-20 sm:py-28 px-4 relative border-t border-emerald-500/10 animated-bg">
+        <div className="container mx-auto max-w-3xl text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <Sparkles className="w-16 h-16 text-green-600 mx-auto mb-6" />
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">
+            <div className="icon-circle w-16 h-16 mx-auto mb-6">
+              <Sparkles className="w-8 h-8 text-emerald-400" />
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-outfit font-bold text-emerald-50 mb-6">
               {t.home.readyToProtect}
             </h2>
-            <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
+            <p className="text-emerald-200/50 text-lg mb-10 max-w-xl mx-auto">
               {t.home.description}
             </p>
             <Link
               href="/predict"
-              className="inline-flex items-center gap-3 bg-green-600 text-white px-12 py-5 rounded-xl font-bold hover:bg-green-700 transition-all text-xl shadow-2xl hover:shadow-3xl hover:scale-105"
+              id="cta-get-started"
+              className="inline-flex items-center gap-3 glow-btn text-white px-10 py-5 rounded-xl font-bold text-xl"
             >
               {t.home.getStartedFree}
               <ArrowRight className="w-6 h-6" />

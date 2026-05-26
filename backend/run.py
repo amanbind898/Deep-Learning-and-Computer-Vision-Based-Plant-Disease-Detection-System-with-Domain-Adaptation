@@ -12,17 +12,17 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import uvicorn
 
 if __name__ == "__main__":
-    print("[INFO] Starting AgriVision Backend...")
-    print("[INFO] API will be available at: http://localhost:8000")
-    print("[INFO] API Docs at: http://localhost:8000/docs")
+    print("🌱 Starting AgriVision Backend...")
+    print("📍 API will be available at: http://localhost:8000")
+    print("📚 API Docs at: http://localhost:8000/docs")
     print()
     
     # Verify API key is loaded
-    api_key = os.getenv("PERPLEXITY_API_KEY")
+    api_key = os.getenv("GROQ_API_KEY")
     if api_key:
-        print(f"[OK] Perplexity API key loaded: {api_key[:10]}...")
+        print(f"✅ Groq API key loaded: {api_key[:10]}...")
     else:
-        print("[WARNING] Warning: No Perplexity API key found!")
+        print("⚠️  Warning: No Groq API key found! Chat will use fallback responses.")
     print()
     
     uvicorn.run("api.main:app", host="0.0.0.0", port=8000, reload=True)
