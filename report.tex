@@ -210,11 +210,11 @@ Alongside the classification features, a local knowledge-grounded RAG engine was
 \chapter{INTRODUCTION}
 
 \section{General}
-Agriculture serves as the foundation of the global economy. It supplies food, raw materials, and jobs to billions of individuals. Within developing countries like India, farming supports more than half of the workforce and adds substantially to the national Gross Domestic Product (GDP). Pests, environmental stressors, and plant diseases constantly threaten these agricultural outputs. Pathogens such as fungi, bacteria, and viruses lead to severe crop damage. Consequently, India loses around 15\% to 20\% of its total agricultural production every year.
+Agriculture represents the cornerstone of the global economy, supplying vital sustenance, raw materials, and livelihoods to billions worldwide. In developing nations like India, the agricultural sector employs over half the national workforce and contributes significantly to the country's Gross Domestic Product (GDP). However, agricultural yield remains constantly threatened by biological pathogens, environmental stressors, and invasive pests. Pathological infections—predominantly fungal, bacterial, and viral diseases—inflict catastrophic crop losses, resulting in an annual reduction of approximately 15\% to 20\% in India's total agricultural output.
 
-Finding and identifying plant diseases early is essential to stop these losses. Historically, farmers look at leaf symptoms to figure out the disease. Relying on visual checks is subjective, takes a lot of time, and frequently leads to incorrect conclusions. Getting expert advice from plant pathologists is also difficult in isolated farming regions. Incorrect diagnoses usually result in the wrong application of chemical pesticides. This mistake raises farming costs, harms the soil, and pollutes the environment.
+Early identification of crop diseases is imperative to mitigate these losses. Traditionally, farmers diagnose plant pathologies through visual inspection of leaf symptoms. However, visual diagnostics are highly subjective, error-prone, and labor-intensive. Moreover, accessing professional plant pathologists remains difficult in remote, rural farming communities. Consequently, inaccurate diagnoses often prompt farmers to apply incorrect chemical pesticides, which not only escalates production costs but also causes soil degradation and environmental toxicity.
 
-Applying Computer Vision and Deep Learning techniques provides a practical way to automate disease detection. Convolutional Neural Networks display excellent results in classifying images. Still, researchers mostly build these models using images taken in Controlled labs. When these models run in real agricultural fields, their accuracy drops significantly. The proposed project tackles this domain gap. It introduces a lightweight CNN named ``AgriNet,'' applies domain adaptation methods, incorporates explainable AI, and uses a Retrieval-Augmented Generation system to give accurate farming advice.
+Automating disease detection using computer vision and deep learning techniques offers a scalable, objective solution. Convolutional Neural Networks (CNNs) have shown state-of-the-art performance in image classification. Nonetheless, most academic models are developed using pristine, laboratory-captured datasets, leading to a performance collapse when deployed in natural, unstructured field environments. To address this domain gap, we present a unified system featuring: (i) a custom, lightweight CNN backbone called ``AgriNet''; (ii) a mixed-domain training pipeline for domain adaptation; (iii) Explainable AI (XAI) overlays via Grad-CAM; and (iv) a Retrieval-Augmented Generation (RAG) assistant that provides context-grounded, verified agricultural advice.
 
 \section{Literature Survey}
 To establish the research context, a thorough survey of literature spanning traditional machine learning, deep learning architectures, domain adaptation, and retrieval systems in agriculture was performed.
@@ -254,12 +254,12 @@ The remainder of this report is organized as follows: Chapter 2 describes the da
 \chapter{DATASET PREPARATION AND DOMAIN ADAPTATION}
 
 \section{General}
-A deep learning algorithm's performance depends directly on its training data. Exposing the model to varied imaging conditions ensures better generalization in agricultural vision tasks. This section explains the chosen datasets, how the images were preprocessed, the augmentation strategies applied, and the mapping logic used to combine field and lab pictures.
+A deep learning classifier's capability is fundamentally bound to the quality and diversity of its training data. Exposing neural networks to varied environmental conditions is critical for achieving robust generalization in agricultural computer vision. This chapter details our primary and secondary datasets, the image preprocessing pipeline, data augmentation techniques, and the class mapping logic implemented to fuse laboratory and field imagery.
 
 \section{Primary Dataset: PlantVillage}
-The PlantVillage dataset acts as the starting point for the training phase. It holds 54,305 high-resolution color photos showing both diseased and healthy crop leaves. These images cover 14 different plant species, including Apple, Corn, Potato, Tomato, and Grape. The labels are split across 38 specific categories. 
+We utilized the PlantVillage dataset \cite{plantvillage} as our primary training source. This corpus contains 54,305 high-resolution, color images of healthy and diseased crop leaves across 14 plant species (e.g., Apple, Corn, Potato, Tomato, and Grape), distributed among 38 biological classes.
 
-Every image in PlantVillage was taken inside a controlled laboratory. The leaves were laid flat on a solid grey background under studio lights. This environment helps the neural network easily pick up the main physical signs of leaf diseases. However, the lack of background variation restricts the model from performing well when faced with natural, outdoor environments.
+Importantly, all PlantVillage photos were captured under controlled laboratory conditions, featuring single leaves detached and laid flat against uniform grey backgrounds under consistent studio lighting. While this simplifies the extraction of clear pathological features, the total lack of background variation limits the network's generalization capability when exposed to unstructured, outdoor conditions.
 
 \section{Secondary Dataset: PlantDoc}
 The PlantDoc dataset was added to inject real-world visual noise into the training process. It comprises 2,231 images representing 13 species. Unlike the lab images, PlantDoc photos were taken in actual farms using mobile phones. The pictures show leaves still attached to plants, surrounded by soil, weeds, shifting sunlight, and overlapping branches. Merging this data forces the network to find features that are not dependent on background clutter.
@@ -299,10 +299,10 @@ Through the execution of this fusion pipeline, the domain discrepancy between la
 This part covers the architectural choices behind the custom CNN backbone, AgriNet. It breaks down the mathematical logic of the primary building blocks, describes the two-stage training approach, and details how the local Retrieval-Augmented Generation (RAG) system was put together.
 
 \section{Custom CNN Backbone: AgriNet}
-Standard convolutions require a massive amount of parameters, making them difficult to run on mobile devices. AgriNet was designed as a lightweight alternative to solve this problem. Its core structure relies on Depthwise Separable Convolutions and Inverted Residual Blocks, internally referred to as AgriBlocks \cite{mobilenetv2}.
+Standard 2D convolutions demand substantial computational resources and parameters, hindering deployment on edge devices and mobile phones. To alleviate this bottleneck, we designed AgriNet as a lightweight, resource-efficient alternative. The foundational building blocks of AgriNet are Depthwise Separable Convolutions and Inverted Residual Blocks (AgriBlocks) \cite{mobilenetv2}.
 
 \subsection{Depthwise Separable Convolutions}
-These convolutions lower both the parameter count and the computational load by splitting a normal convolution into two distinct operations. The depthwise step applies a single spatial filter to each input channel. The pointwise step uses a 1x1 convolution to linearly mix the outputs across all channels.
+Depthwise separable convolutions minimize the parameter footprint and multiplication operations by factorizing a standard convolution into two distinct stages: (i) a depthwise convolution, which applies a single spatial filter to each input channel independently, and (ii) a pointwise convolution ($1 \times 1$), which linearly projects the depthwise outputs into the target channel space.
 
 Let $D_K$ be the spatial dimension of the convolutional kernel, $M$ be the number of input channels, $N$ be the number of output channels, and $D_F \times D_F$ be the spatial dimension of the output feature map. The computational cost of a standard convolution is:
 \begin{equation}
@@ -319,12 +319,12 @@ The ratio of computational reduction is expressed as:
 \frac{\text{Cost}_{\text{separable}}}{\text{Cost}_{\text{standard}}} = \frac{1}{N} + \frac{1}{D_K^2}
 \end{equation}
 
-Using a standard $3\times3$ kernel as an example, this technique cuts the floating-point operations by roughly 8 to 9 times, while keeping the classification accuracy almost identical.
+Assuming a standard kernel size of $D_K = 3$, this decomposition reduces the computational complexity by a factor of 8 to 9 depending on the output channel dimension $N$, without significant degradation in classification performance.
 
 \subsection{Inverted Residual Block (AgriBlock)}
-The AgriBlock acts as the main computational unit for the network. It executes three steps in sequence. First, an expansion layer uses a pointwise convolution to increase the channel dimensions based on a specific expansion factor. Next, a depthwise layer applies spatial filtering on this larger feature space. Finally, a projection layer shrinks the filtered features back down to a smaller dimension. A linear bottleneck is maintained by omitting any non-linear activation after the projection step.
+The AgriBlock serves as the core feature extraction unit of AgriNet, structured as a three-stage block. First, an expansion pointwise convolution ($1 \times 1$) projects the input to a higher-dimensional space based on the expansion factor $t$. Second, a depthwise convolution ($3 \times 3$) extracts spatial features in this high-dimensional space. Third, a projection pointwise convolution ($1 \times 1$) projects the features back down to the target dimension. To prevent information loss and maintain linear representation, we omit the non-linear activation function after the final projection step, forming a linear bottleneck.
 
-A residual skip connection links the input of the block directly to the output. This only occurs if the stride equals 1 and the input channels match the output channels. The full network begins with a convolutional stem, followed by four AgriBlocks that gradually increase the channel depth. A Global Average Pooling layer, a Dropout layer set to 0.3, and a final fully connected classification layer complete the architecture, as outlined in Table~\ref{tab:agrinet_layout}.
+An identity shortcut connection is introduced to sum the block input and output. This skip connection is only applied when the stride equals $1$ and the input channels match the output channels. The final network architecture consists of an initial convolutional stem, four sequential AgriBlocks with increasing channel depths, a Global Average Pooling layer, a Dropout layer (configured to $0.3$), and a final fully connected classification layer, as outlined in Table~\ref{tab:agrinet_layout}.
 
 \begin{table}[h!]
 \centering
@@ -359,13 +359,13 @@ The second phase loaded the saved weights from the first phase and switched the 
 A Retrieval-Augmented Generation pipeline was built to supply verified agricultural treatments.
 
 \subsection{Document Ingestion and Chunking Strategy}
-The system loads official farming manuals covering various crops (e.g., Tomato \cite{nhb_tomato}, Potato \cite{nhb_potato}, Maize \cite{seedco_maize}, Apple \cite{vikaspedia_apple}) alongside general Integrated Disease Management guidelines \cite{idm_concept}, and extracts their text. LangChain's RecursiveCharacterTextSplitter processes this text using a chunk size of 1,000 characters and a 200-character overlap. This overlap ensures context isn't lost between chunks.
+We developed an automated pipeline to ingest official agricultural publications (e.g., Tomato \cite{nhb_tomato}, Potato \cite{nhb_potato}, Maize \cite{seedco_maize}, Apple \cite{vikaspedia_apple}) and Integrated Disease Management manuals \cite{idm_concept}. The system extracts raw text from these PDFs and processes them using LangChain's \texttt{RecursiveCharacterTextSplitter}. The chunk size is configured to $1,000$ characters with a $200$-character sliding overlap. This overlap maintains semantic continuity across boundary points.
 
 \subsection{Vector Database and Retrieval Mechanics}
-An embedding model converts these text chunks into dense 384-dimensional vector representations. These vectors are then stored inside a local FAISS index. When a farmer submits a question, the system embeds the query and searches the FAISS index to find the three most similar chunks using cosine similarity.
+To perform fast similarity search, we embed the text chunks into dense $384$-dimensional vectors using a Sentence-Transformers model. These embeddings are stored locally in a Facebook AI Similarity Search (FAISS) vector index. When a user submits an inquiry, the query is mapped to the same embedding space, and the system runs a cosine-similarity search to retrieve the top $k = 3$ most relevant document chunks.
 
 \subsection{Context-Grounded Generation (Groq Llama-3.1)}
-The pulled context is mixed with the user's question to form a strict system prompt. This prompt goes to the Llama-3.1-8b-instant model via the Groq API. The instructions force the model to base its answer entirely on the provided text. If the manuals don't contain the answer, the model simply states it doesn't know. The response is then sent back to the user with proper page citations.
+The retrieved document chunks are formatted alongside the user query within a strictly constrained system prompt. This prompt is transmitted to the \texttt{llama-3.1-8b-instant} model via the Groq API. The model is explicitly instructed to synthesize answers solely from the retrieved context; if the context lacks relevant information, the model states that it cannot answer. This setup ensures that all responses are context-grounded and contain references to the source documentation, minimizing hallucinations.
 
 \section{Conclusion}
 By combining a lightweight CNN classifier with a localized RAG engine, the proposed methodology addresses both disease identification and treatment advisory within a single, integrated architecture.
@@ -373,14 +373,14 @@ By combining a lightweight CNN classifier with a localized RAG engine, the propo
 \chapter{SYSTEM DESIGN AND IMPLEMENTATION}
 
 \section{General}
-This section maps out the technical design of the proposed application. It includes Data Flow Diagrams, the overall system architecture, the database schema, and the necessary hardware specifications.
+This chapter delineates the architectural design and structural implementation details of the AgriVision application, including data flow, database models, and hardware specifications.
 
 \section{Data Flow Diagrams (DFDs)}
-Data Flow Diagrams show exactly how information moves through the application.
+Data Flow Diagrams (DFDs) track the progression and transformations of data throughout the system.
 
-At the context level (Level 0), the application acts as one main process communicating with the user and an external PDF database. Farmers upload leaf images and send disease questions. The system processes these inputs and returns class predictions, visual heatmaps, prediction logs, and text-based treatment advice. The PDF database acts as the static knowledge base.
+At the Context Level (Level 0), the system acts as a monolithic interface connecting the user, the database, and the vector index. Farmers upload leaf images and input text queries. The system outputs classification predictions, Grad-CAM overlays, RAG responses, and transaction logs.
 
-The Level 1 diagram breaks the system into three sub-processes. The authentication process handles logins and issues JWT tokens after checking the PostgreSQL database. The prediction process takes the uploaded image, runs it through AgriNet, creates a Grad-CAM heatmap, and logs the event in the database. The RAG chat process takes text queries, searches the FAISS index, and uses the LLM to generate a verified response. These DFD levels are illustrated in Figure~\ref{fig:dfd}.
+The Level 1 DFD decomposes the system into three primary processes: (i) user authentication, which verifies credentials and issues JWTs; (ii) image prediction, which processes uploads through AgriNet, computes Grad-CAM heatmaps, and saves logs to PostgreSQL; and (iii) the RAG chat loop, which routes user queries through the FAISS vector database and LLM APIs. Figure~\ref{fig:dfd} illustrates these DFD levels.
 
 \begin{figure}[h!]
     \centering
@@ -453,10 +453,10 @@ The system design provides a scalable architecture where frontend interactions, 
 \chapter{RESULT ANALYSIS AND DISCUSSION}
 
 \section{Experimental Results}
-The custom AgriNet model's performance was tracked across the base training phase and the mixed-domain fine-tuning phase.
+We systematically tracked the performance of the custom AgriNet model during both the initial base training phase and the subsequent mixed-domain fine-tuning stage.
 
 \subsection{Phase 1 Base Model Training Results}
-Training started on the clean PlantVillage dataset. The network converged rapidly, hitting a validation accuracy of 94.68\% by the second epoch. At Epoch 10, the model achieved its lowest validation loss of 0.0396 and a peak validation accuracy of 98.75\%. These numbers prove that Inverted Residual Blocks easily capture leaf disease traits when the background is controlled, and the epoch-wise training metrics are detailed in Table~\ref{tab:phase1_metrics}.
+During the initial phase on the pristine PlantVillage corpus, the network exhibited rapid convergence, reaching a validation accuracy of $94.68\%$ by the second epoch. By the final epoch ($10$), the model attained its lowest validation loss of $0.0396$ and a peak validation accuracy of $98.75\%$. These results indicate that the Inverted Residual Blocks effectively extract core leaf features when background noise is minimized. The detailed epoch-by-epoch training progress is reported in Table~\ref{tab:phase1_metrics}.
 
 \begin{table}[h!]
 \centering
@@ -482,7 +482,7 @@ Training started on the clean PlantVillage dataset. The network converged rapidl
 \end{table}
 
 \subsection{Phase 2 Mixed-Domain Fine-Tuning Results}
-The second phase introduced the noisy PlantDoc images. Adding real-world backgrounds and difficult lighting made the training harder, but the model stabilized quickly. By Epoch 9, the mixed-domain validation accuracy reached 96.14\%. This metric confirms the network successfully generalized to handle unpredictable field environments. The corresponding learning rates, losses, and validation accuracies are summarized in Table~\ref{tab:phase2_metrics}.
+Phase 2 introduced the challenging, noisy PlantDoc images into the training pipeline. Although natural backgrounds, occlusion, and variable illumination increased training difficulty, the model converged within $9$ epochs, achieving a mixed-domain validation accuracy of $96.14\%$. This validates the effectiveness of our domain adaptation approach in handling natural field environments. Table~\ref{tab:phase2_metrics} provides the fine-tuning training metrics.
 
 \begin{table}[h!]
 \centering
@@ -508,7 +508,7 @@ The second phase introduced the noisy PlantDoc images. Adding real-world backgro
 \end{table}
 
 \section{Performance Evaluation Metrics}
-Standard mathematical formulas were used to evaluate classification performance. Precision calculates the ratio of true positive predictions against all predicted positives. Recall calculates the ratio of true positive predictions against the actual positives in the dataset. The F1-Score takes the harmonic mean of both precision and recall. Testing the model on the combined validation set resulted in a weighted average of 0.99 for Precision, Recall, and the F1-Score. The detailed per-class predictions and errors are visualized in the confusion matrix in Figure~\ref{fig:confusion_matrix}.
+We evaluated classification performance using standard statistical metrics: Precision, Recall, and F1-score. Precision measures the ratio of true positive predictions to all predicted positives; Recall measures the ratio of true positives to all actual positive instances; and the F1-score is computed as their harmonic mean. On the combined validation dataset, the model achieved a weighted average of $0.99$ across all three metrics. The corresponding 38-class confusion matrix is illustrated in Figure~\ref{fig:confusion_matrix}.
 
 \begin{figure}[h!]
     \centering
