@@ -391,9 +391,26 @@ The Level 1 DFD decomposes the system into three primary processes: (i) user aut
 \end{figure}
 
 \section{Project Architecture}
-The system utilizes a decoupled client-server architecture. The frontend layer is implemented using Next.js 14 and React. It serves as a pure client and manages the presentation layer using custom vanilla CSS for glassmorphic visuals, with Framer Motion handling smooth layout transitions. 
+The system utilizes a decoupled client-server architecture to ensure high performance, security, and scalability. The separation of concerns between the presentation layer, the application logic, and the machine learning/retrieval subsystems is illustrated in the System Architecture Diagram in Figure~\ref{fig:system_architecture}.
 
-The backend layer is built using FastAPI on Python 3.11, handling all business logic, machine learning inference, and database interactions. The database layer utilizes PostgreSQL for persistent storage, integrated directly with the backend using the Python Prisma Client (\texttt{prisma-client-py}). User authentication is managed securely on the backend using JSON Web Tokens (JWT) and password hashing with Bcrypt, establishing a robust separation of concerns.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{media/system_architecture.png}
+    \caption{AgriVision Multi-Layer System Architecture Diagram.}
+    \label{fig:system_architecture}
+\end{figure}
+
+The architecture is divided into three primary layers:
+\begin{enumerate}
+    \item \textbf{Presentation Layer (Frontend):} Built using Next.js 14 and React. It serves as a pure client and manages the presentation layer using custom vanilla CSS for glassmorphic visuals, with Framer Motion handling smooth layout transitions. It communicates with the backend via REST APIs for authentication, prediction requests, and conversational chat queries.
+    \item \textbf{Application Logic Layer (Backend):} Powered by FastAPI on Python 3.11. This layer acts as the central orchestrator. It manages API routing, handles secure user authentication using JSON Web Tokens (JWT) and password hashing with Bcrypt, manages request/response payloads, and coordinates services between the machine learning models and the database.
+    \item \textbf{Data and AI Engine Layer:} Consists of three core sub-components:
+    \begin{itemize}
+        \item \textbf{PostgreSQL Database:} Persistent storage for user records, prediction histories, and diagnostic statistics, integrated directly with the backend using the Python Prisma Client (\texttt{prisma-client-py}).
+        \item \textbf{Deep Learning Classifier (AgriNet + Grad-CAM):} Executes the lightweight PyTorch model for disease classification and generates explainability heatmaps using Grad-CAM.
+        \item \textbf{RAG Chat Subsystem:} Connects the FAISS vector database containing the indexed agricultural manuals with the Groq API (\texttt{llama-3.1-8b-instant} model) to serve grounded, verified treatment advice.
+    \end{itemize}
+\end{enumerate}
 
 \section{Database and Schema Design}
 The relational database is configured with two primary models to track users and prediction logs. The specific structure and data types for these tables are detailed in Table~\ref{tab:user_schema} and Table~\ref{tab:prediction_schema}.
@@ -447,6 +464,39 @@ createdAt & DateTime & Default (\texttt{now()}) & Timestamp of when prediction w
 The core languages used include Python 3.11 for the backend and TypeScript for the frontend UI. Key libraries involve PyTorch, Torchvision, LangChain, FAISS, Sentence-Transformers, FastAPI, and Prisma. The database runs on PostgreSQL 15 or newer.
 
 The minimum hardware needed to run inference includes an Intel i5 CPU, 8 GB of RAM, and an NVIDIA GTX 1050 Ti. For training the model, an Intel i7 or Ryzen 7 paired with an RTX 3060 and 16 GB of RAM is recommended. The actual training was completed on a local setup using an NVIDIA GeForce GTX 1650 with 4GB of VRAM.
+
+\section{User Interface Design}
+To provide an intuitive and accessible experience for farmers and researchers, the AgriVision web application features a responsive user interface designed with a clean, glassmorphic dark theme. The web portal includes several primary pages and panels:
+
+\subsection{Plant Disease Diagnosis Page}
+The main interface allows users to upload leaf images or use their device camera to capture real-time plant leaves. Upon uploading, the backend processes the image using the AgriNet model and returns the prediction along with the classification confidence and a Grad-CAM heatmap overlay to explain the model's focus. Figure~\ref{fig:ui_diagnosis} displays the plant disease identification panel with the Grad-CAM visualization.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{media/ui_predict.png}
+    \caption{AgriVision Diagnosis Interface showing predictions and Grad-CAM explanation.}
+    \label{fig:ui_diagnosis}
+\end{figure}
+
+\subsection{AI Chat Assistant Panel}
+The application integrates a Retrieval-Augmented Generation (RAG) chat helper called ``AI Assistant'' (AI सहायक). The chatbot utilizes the user query and the classification context to retrieve validated treatments from the local FAISS index and generate natural-language recommendations supporting multilingual output (e.g., Hindi). Figure~\ref{fig:ui_chat} illustrates the conversational interface assisting the user.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{media/ui_chat.png}
+    \caption{Interactive AI Chat Assistant panel helping the user.}
+    \label{fig:ui_chat}
+\end{figure}
+
+\subsection{Diagnosis History Dashboard}
+To keep track of previous scans, the web portal provides a dedicated history dashboard showing a chronological list of prior diagnoses, including crop species, identified disease, prediction timestamp, and confidence. Users can click on any past record to open details or download reports. Figure~\ref{fig:ui_history} shows the history dashboard.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{media/ui_history.png}
+    \caption{Chronological Diagnosis History Dashboard listing previous predictions.}
+    \label{fig:ui_history}
+\end{figure}
 
 \section{Conclusion}
 The system design provides a scalable architecture where frontend interactions, heavy deep learning inference, and database logs are handled by decoupled, dedicated services.
