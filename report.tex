@@ -193,13 +193,13 @@ Appreciation is extended to all the faculty members of the \departmentMixed, \in
 \chapter*{ABSTRACT}
 
 \addcontentsline{toc}{chapter}{ABSTRACT}
-Global food security relies heavily on agricultural productivity, but plant diseases constantly reduce crop yields. Annual crop losses in India alone hit between 15\% and 20\% due to pathologies that go undetected or get diagnosed too late. Agronomists usually rely on physical inspections for diagnosis. This manual process is slow, prone to mistakes, and hard to access for farmers in remote areas. The proposed project offers a solution by combining a specialized Convolutional Neural Network (CNN) called ``AgriNet'' with a Retrieval-Augmented Generation (RAG) chat engine.
+Agricultural productivity is vital for global food security, yet crop pathologies continuously threaten harvests. In India, annual crop losses range from 15\% to 20\% because plant diseases are often identified too late or incorrectly diagnosed. Traditional diagnostics depend on physical inspection by experts, a manual workflow that is slow, subjective, and inaccessible to remote farming communities. To address these limitations, this project presents an integrated system combining a custom-designed Convolutional Neural Network (CNN) named ``AgriNet'' with a localized Retrieval-Augmented Generation (RAG) assistant.
 
-Most agricultural computer vision models are trained using controlled laboratory images. This creates a large domain gap, causing them to fail frequently when tested in messy, real-world farm environments with varied lighting and backgrounds. The current work solves this problem through Mixed-Domain Dataset Fusion. Initially, the base model was trained on 54,305 lab images from the PlantVillage dataset, reaching a validation accuracy of 98.75\%. To fix the domain gap, the system integrates 2,231 field images from the PlantDoc dataset. Mapping 27 real-world categories into the standard 38-class structure and fine-tuning the network on both domains resulted in a mixed-domain validation accuracy of 96.14\%.
+Most existing deep learning models for plant pathology are trained on images captured in controlled laboratory environments. This reliance introduces a domain gap, leading to classification failures when models encounter noisy, real-world field conditions with varying backgrounds and shifting sunlight. We address this limitation through mixed-domain dataset fusion. We initially trained our base network on 54,305 laboratory-captured leaf images from the PlantVillage dataset, achieving a validation accuracy of 98.75\%. To bridge the domain gap, we integrated 2,231 field images from the PlantDoc dataset. By mapping 27 field categories to the standard 38-class schema and fine-tuning the network across both datasets, we achieved a mixed-domain validation accuracy of 96.14\%.
 
-A custom, lightweight CNN backbone was developed from scratch to replace heavy pre-trained networks. It uses Inverted Residual Blocks and Depthwise Separable Convolutions. This specific design lowers the parameter count and speeds up inference, making it suitable for hardware with limited resources. Gradient-weighted Class Activation Mapping (Grad-CAM) adds an explainability layer by highlighting the exact diseased areas on the leaf.
+Rather than relying on resource-intensive pre-trained models, we developed a lightweight CNN backbone from scratch in PyTorch. Our design utilizes manually implemented inverted residual blocks and depthwise separable convolutions to reduce parameter count and inference latency, making the model suitable for low-power edge hardware. To make the model's predictions explainable, we integrated Gradient-weighted Class Activation Mapping (Grad-CAM) to generate overlays that highlight specific diseased spots on the leaf.
 
-Alongside the classification features, a local knowledge-grounded RAG engine was built. Authoritative agricultural manuals were split into vector embeddings and saved in a local FAISS database. When users submit queries, the system pulls relevant treatment context and synthesizes an answer via the Groq API (using Llama-3.1-8b-instant). This process prevents the generation of false information and ensures all treatment advice is verified. A FastAPI backend handles the logic, connected to a Next.js frontend with glassmorphic visuals and downloadable PDF reports.
+To supplement classification, we constructed a localized RAG engine to provide verified treatment recommendations. We parsed authoritative agricultural guides into vector embeddings and indexed them in a local FAISS database. When a user submits a query, the system retrieves the most relevant document chunks and utilizes the Llama-3.1-8b-instant model via the Groq API to synthesize a response. This retrieval-constrained approach prevents LLM hallucinations, ensuring all recommendations are grounded in verified reference materials. The complete application features a FastAPI backend connected to a responsive, glassmorphic Next.js interface with automated PDF report generation.
 
 \tableofcontents
 \listoftables
@@ -211,32 +211,32 @@ Alongside the classification features, a local knowledge-grounded RAG engine was
 \chapter{INTRODUCTION}
 
 \section{General}
-Agriculture represents the cornerstone of the global economy, supplying vital sustenance, raw materials, and livelihoods to billions worldwide. In developing nations like India, the agricultural sector employs over half the national workforce and contributes significantly to the country's Gross Domestic Product (GDP). However, agricultural yield remains constantly threatened by biological pathogens, environmental stressors, and invasive pests. Pathological infections—predominantly fungal, bacterial, and viral diseases—inflict catastrophic crop losses, resulting in an annual reduction of approximately 15\% to 20\% in India's total agricultural output.
+Agriculture is a vital sector of the global economy, providing food, raw materials, and employment for a substantial portion of the world's population. In developing economies such as India, farming sustains more than half of the national workforce and remains a primary contributor to the Gross Domestic Product (GDP). In spite of its significance, agricultural productivity is under constant pressure from biological pathogens, environmental fluctuations, and pest infestations. Crop diseases stemming from fungal, bacterial, and viral infections are particularly damaging, leading to annual losses of 15\% to 20\% in India's total agricultural yield, which directly threatens rural livelihoods.
 
-Early identification of crop diseases is imperative to mitigate these losses. Traditionally, farmers diagnose plant pathologies through visual inspection of leaf symptoms. However, visual diagnostics are highly subjective, error-prone, and labor-intensive. Moreover, accessing professional plant pathologists remains difficult in remote, rural farming communities. Consequently, inaccurate diagnoses often prompt farmers to apply incorrect chemical pesticides, which not only escalates production costs but also causes soil degradation and environmental toxicity.
+Mitigating these losses requires prompt and accurate detection of crop abnormalities. The conventional approach relies on manual inspection of leaves to identify visual symptoms, which is inherently subjective, slow, and prone to misinterpretation. Smallholder farmers in distant regions face challenges accessing expert agronomists. When visual checks fail, farmers often default to broad-spectrum chemical pesticides, increasing operational expenses while contributing to soil health degradation and broader ecological damage.
 
-Automating disease detection using computer vision and deep learning techniques offers a scalable, objective solution. Convolutional Neural Networks (CNNs) have shown state-of-the-art performance in image classification. Nonetheless, most academic models are developed using pristine, laboratory-captured datasets, leading to a performance collapse when deployed in natural, unstructured field environments. To address this domain gap, we present a unified system featuring: (i) a custom, lightweight CNN backbone called ``AgriNet''; (ii) a mixed-domain training pipeline for domain adaptation; (iii) Explainable AI (XAI) overlays via Grad-CAM; and (iv) a Retrieval-Augmented Generation (RAG) assistant that provides context-grounded, verified agricultural advice.
+Computer vision and deep learning provide an automated, objective framework to scale plant diagnosis. Deep neural networks, particularly Convolutional Neural Networks (CNNs), have demonstrated high accuracy in image-based classification tasks. Still, models trained on clean, laboratory-grade datasets often suffer severe performance drops when introduced to the messy realities of active fields. This project addresses the lab-to-field performance drop through an integrated system: (i) a custom, lightweight CNN architecture named ``AgriNet'', (ii) a training pipeline optimized for mixed-domain adaptation, (iii) localized interpretability heatmaps using Grad-CAM, and (iv) a Retrieval-Augmented Generation (RAG) agent that supplies verified treatment guidelines.
 
 \section{Literature Survey}
 To establish the research context, a thorough survey of literature spanning traditional machine learning, deep learning architectures, domain adaptation, and retrieval systems in agriculture was performed.
 
 \subsection{Traditional Classifiers vs. Deep Learning Models}
-Prior to the dominance of Deep Learning, computer vision in agriculture relied on handcrafted features paired with classical classifiers. Sarunyagate et al. \cite{sarunyagate1996} and other early researchers proposed image segmentation techniques to isolate lesion areas on leaves, followed by feature extraction. These features were classified using Support Vector Machines (SVM), Random Forests, or K-Nearest Neighbors (KNN). A major limitation of these systems was their dependency on manual feature selection, which is highly sensitive to changes in leaf color, size, and lighting conditions.
+Before deep learning models became the standard, image-based plant disease detection relied on hand-designed features combined with traditional classifiers. Early methodologies utilized manual color segmentation and edge detection to isolate lesion spots on leaves \cite{alhiary2011}. These extracted descriptors were then categorized using algorithms such as Support Vector Machines (SVM), Random Forests, or K-Nearest Neighbors (KNN). The primary drawback of these traditional systems was their reliance on human-selected features, which fail to generalize under variable field lighting, shifting camera angles, and leaf shape variations.
 
-With the breakthrough of AlexNet and subsequent models like ResNet and VGG16 \cite{vgg}, the paradigm shifted to Deep Learning. CNNs automate the feature extraction process by learning hierarchical representations directly from raw image pixels. However, standard deep learning models like VGG16 are computationally heavy, containing over 138 million parameters, making them unsuitable for real-time mobile deployment or execution on low-power devices in fields.
+The introduction of deep learning architectures, beginning with AlexNet and progressing through VGG and ResNet architectures \cite{vgg}, transformed agricultural image analysis. These deep neural networks automatically extract discriminative features by learning hierarchical patterns directly from raw pixel values. Still, standard models are often too large for practical deployment; VGG16, for instance, requires over 138 million parameters, which presents a bottleneck for real-time inference on mobile applications or low-power embedded devices used directly on farms.
 
 \subsection{Domain Adaptation in Agricultural Computer Vision}
-The availability of standardized datasets has accelerated deep learning research. The most prominent dataset is PlantVillage \cite{plantvillage}, introduced by Hughes and Salathé, which contains over 54,000 images captured in controlled laboratory settings with uniform grey backgrounds. Models trained on PlantVillage regularly report classification accuracies exceeding 98\%. However, Mohanty et al. \cite{mohanty} demonstrated that when these models are tested on images from actual farm fields, their accuracy drops to under 30\%.
+Public datasets have helped researchers improve deep learning models for crop monitoring. The PlantVillage dataset \cite{plantvillage} is a notable example, containing more than 54,000 leaf images shot under standardized laboratory conditions against plain grey backdrops. Models trained on this dataset achieve classification rates above 98\%, but these figures are often misleading. Real-world testing reveals that these laboratory-trained models experience a sharp performance decline, sometimes dropping below 30\% accuracy when evaluating leaves in complex farm settings \cite{mohanty}.
 
-This drop is caused by covariate shift, where the background, lighting, and leaf positioning in the target domain differ significantly from the source domain. Singh et al. \cite{plantdoc} introduced the PlantDoc dataset to represent real-world conditions. Researchers have since utilized domain adaptation techniques, such as mixed-domain training and adversarial training, to enforce the extraction of domain-invariant features.
+This decline stems from covariate shift, where the target deployment environment (field conditions) displays background textures, sunlight patterns, and leaf angles that differ fundamentally from the source training environment (laboratory). To establish a more realistic training benchmark, the PlantDoc dataset was introduced, capturing leaves in active agricultural settings \cite{plantdoc}. Current research leverages domain adaptation strategies, such as multi-source mixed training and adversarial alignment, to encourage models to extract features that remain invariant across different environments.
 
 \subsection{Knowledge-Grounded Support and RAG Systems}
-A complete agricultural assistant must go beyond classification; it must provide reliable treatment advice to farmers. Traditional chatbots and Large Language Models (LLMs) suffer from hallucinations, generating confident but incorrect treatment advice, which can lead to crop damage if implemented by farmers.
+An effective field assistant must do more than identify leaf diseases; it should deliver actionable, verified treatment guidelines. Standard generative Large Language Models (LLMs) are prone to hallucinating technical information, offering misleading or incorrect remedy suggestions that could result in unintended crop loss if implemented blindly.
 
-Retrieval-Augmented Generation (RAG), proposed by Lewis et al. \cite{rag}, resolves this issue by constraining the LLM's response generation to a set of retrieved documents. In agricultural systems, RAG indexes official farming manuals and research guides using vector databases like FAISS \cite{faiss}. When a user queries the system, relevant paragraphs are retrieved and passed to the LLM to synthesize a grounded, accurate response.
+Retrieval-Augmented Generation (RAG) mitigates this risk by binding the generative model's output to factual, external documentation \cite{rag}. In this architecture, reference manuals, regional crop extension papers, and treatment handbooks are indexed into a vector database such as FAISS \cite{faiss}. Upon receiving a user query, the system identifies and retrieves the most relevant semantic sections and prompts the LLM to generate an answer solely using the extracted context, reducing the chance of hallucinated recommendations.
 
 \section{Motivation}
-The primary motivation for this project is to address the limitations of existing agricultural classification systems. Standard academic projects often rely on fine-tuning pre-trained networks using transfer learning. While effective, this approach does not demonstrate custom architectural design. Farmers are also hesitant to trust AI predictions without understanding the reasoning behind them. The black-box nature of deep neural networks necessitates explainable AI tools like Grad-CAM \cite{gradcam} to visualize the decision-making process. Finally, there is a clear need for a unified platform that not only detects the disease but also offers verified, non-hallucinated treatment guidelines directly sourced from reliable agricultural publications.
+This project is motivated by the real-world limitations of current crop diagnostic tools. Many academic projects rely heavily on off-the-shelf neural architectures pre-trained on non-agricultural images. While this yields acceptable classification rates, it misses the opportunity for targeted, hardware-conscious neural design. Furthermore, agricultural users are unlikely to trust black-box AI recommendations without visible justification. Integrating Explainable AI (XAI) overlays such as Grad-CAM \cite{gradcam} bridges this trust gap by showing exactly which areas of the leaf directed the model's decision. Additionally, diagnosing a plant pathology is only the first step; farmers need a dependable way to access localized, verified treatment plans that do not rely on hallucinated chatbot outputs.
 
 \section{Objectives of the Present Work}
 The objectives defined for the design and deployment of the proposed system are:
@@ -255,25 +255,25 @@ The remainder of this report is organized as follows: Chapter 2 describes the da
 \chapter{DATASET PREPARATION AND DOMAIN ADAPTATION}
 
 \section{General}
-A deep learning classifier's capability is fundamentally bound to the quality and diversity of its training data. Exposing neural networks to varied environmental conditions is critical for achieving robust generalization in agricultural computer vision. This chapter details our primary and secondary datasets, the image preprocessing pipeline, data augmentation techniques, and the class mapping logic implemented to fuse laboratory and field imagery.
+A deep learning classifier's performance in real-world environments depends heavily on the quality and variety of its training data. Introducing neural networks to varied lighting, backgrounds, and weather conditions is crucial for establishing reliable computer vision models in active farming zones. This chapter outlines the primary and secondary datasets used, our preprocessing steps, the augmentation strategies applied, and the custom class mapping developed to integrate laboratory-captured and field-captured leaf images.
 
 \section{Primary Dataset: PlantVillage}
-We utilized the PlantVillage dataset \cite{plantvillage} as our primary training source. This corpus contains 54,305 high-resolution, color images of healthy and diseased crop leaves across 14 plant species (e.g., Apple, Corn, Potato, Tomato, and Grape), distributed among 38 biological classes.
+The PlantVillage repository \cite{plantvillage} served as the initial foundation for training. This dataset contains 54,305 high-resolution color images representing 38 distinct health statuses across 14 crop species, including tomatoes, potatoes, apples, corn, and grapes. 
 
-Importantly, all PlantVillage photos were captured under controlled laboratory conditions, featuring single leaves detached and laid flat against uniform grey backgrounds under consistent studio lighting. While this simplifies the extraction of clear pathological features, the total lack of background variation limits the network's generalization capability when exposed to unstructured, outdoor conditions.
+However, all PlantVillage images were captured in controlled laboratory settings. The leaves were detached, flattened, and photographed against a uniform grey backdrop under consistent studio lights. Although these clean images help the network learn basic visual markers of diseases, the absence of natural backgrounds limits the model's ability to classify images in real farms, where backgrounds are cluttered and unpredictable.
 
 \section{Secondary Dataset: PlantDoc}
-The PlantDoc dataset was added to inject real-world visual noise into the training process. It comprises 2,231 images representing 13 species. Unlike the lab images, PlantDoc photos were taken in actual farms using mobile phones. The pictures show leaves still attached to plants, surrounded by soil, weeds, shifting sunlight, and overlapping branches. Merging this data forces the network to find features that are not dependent on background clutter.
+To address the clean-background limitation, we incorporated the PlantDoc dataset to introduce realistic visual noise \cite{plantdoc}. This collection contains 2,231 images across 13 species, photographed in active farm settings using consumer mobile phones. The leaf samples remain attached to the living plants and are surrounded by soil, weeds, ambient shadows, and overlapping branches. Including these noisy images during training forces the neural network to focus on actual lesion patterns rather than background textures, which helps bridge the performance gap between lab training and field testing.
 
 \section{Preprocessing and Augmentation}
-A strict preprocessing pipeline was applied to all images from both datasets. Every image was resized to 224x224 pixels so it would fit the input requirements of the AgriNet backbone. The pixel values were scaled between 0 and 1, followed by normalization using standard ImageNet channel statistics. 
+We applied a uniform preprocessing pipeline to all image inputs from both sources. Each leaf image was resized to $224 \times 224$ pixels to match the input layer of the custom AgriNet model. Pixel values were scaled to the $[0, 1]$ range and normalized using standard ImageNet channel-wise means and standard deviations.
 
-During the training cycles, data augmentation modified the training split to stop overfitting and boost generalization. The applied transformations included RandomHorizontalFlip to simulate mirrored leaf angles, and RandomRotation to mimic different camera tilts. ColorJitter randomly shifted the brightness, contrast, saturation, and hue to recreate various outdoor lighting scenarios like direct sun or heavy shade.
+To prevent the model from memorizing the training samples, we applied real-time data augmentations. These transformations included random horizontal flipping and random rotations to simulate different camera angles and tilts. We also utilized color jittering to vary brightness, contrast, saturation, and hue, simulating the unpredictable shifts in natural daylight, such as direct sunlight or heavy cloud cover.
 
 \section{Mixed-Domain Dataset Fusion Pipeline}
-Combining PlantVillage and PlantDoc presented a challenge because they used different naming rules for their class folders. A custom PyTorch dataset class, called MappedPlantDocDataset, was built to fix this issue. It maps the secondary dataset labels directly to the corresponding primary 38-class indices. 
+Fusing the two datasets required resolving inconsistencies in their class labels and folder organizations. To align the datasets, we created a custom PyTorch class named \texttt{MappedPlantDocDataset} that maps the labels of the secondary dataset to the standard 38-class system.
 
-A mapping dictionary handled the conversions. It successfully aligned 26 of the 27 PlantDoc classes to their PlantVillage equivalents. One category, `Tomato mold leaf', had to be dropped because it did not have a matching biological class in the primary dataset. Once the mapping was complete, the two datasets were merged using PyTorch's ConcatDataset function. This fusion created a unified training set containing 56,536 images, as summarized in Table~\ref{tab:dataset_distribution}.
+A key-value dictionary translated the class labels, successfully mapping 26 of the 27 PlantDoc categories to their PlantVillage counterparts. We excluded the category `Tomato mold leaf' because it lacked a corresponding target class in the primary dataset. Following this alignment, we combined the two datasets using PyTorch's \texttt{ConcatDataset} utility. This process yielded a unified training set of 56,536 images, as outlined in Table~\ref{tab:dataset_distribution}.
 
 \begin{table}[H]
 \centering
@@ -297,13 +297,13 @@ Through the execution of this fusion pipeline, the domain discrepancy between la
 \chapter{PROPOSED METHODOLOGY}
 
 \section{General}
-This part covers the architectural choices behind the custom CNN backbone, AgriNet. It breaks down the mathematical logic of the primary building blocks, describes the two-stage training approach, and details how the local Retrieval-Augmented Generation (RAG) system was put together.
+This chapter outlines the engineering and architectural designs of the AgriNet CNN backbone. It presents the mathematical foundations of the model's core blocks, describes the two-phase training protocol used, and details the assembly of the local Retrieval-Augmented Generation (RAG) assistant.
 
 \section{Custom CNN Backbone: AgriNet}
-Standard 2D convolutions demand substantial computational resources and parameters, hindering deployment on edge devices and mobile phones. To alleviate this bottleneck, we designed AgriNet as a lightweight, resource-efficient alternative. The foundational building blocks of AgriNet are Depthwise Separable Convolutions and Inverted Residual Blocks (AgriBlocks) \cite{mobilenetv2}.
+Standard 2D convolutional layers require high computational overhead and parameter counts, making them difficult to run on low-power devices. To resolve these computational limitations, we designed a lightweight, custom CNN named AgriNet. This architecture is built upon depthwise separable convolutions and manually implemented inverted residual blocks, which we refer to as AgriBlocks \cite{mobilenetv2}.
 
 \subsection{Depthwise Separable Convolutions}
-Depthwise separable convolutions minimize the parameter footprint and multiplication operations by factorizing a standard convolution into two distinct stages: (i) a depthwise convolution, which applies a single spatial filter to each input channel independently, and (ii) a pointwise convolution ($1 \times 1$), which linearly projects the depthwise outputs into the target channel space.
+Depthwise separable convolutions reduce the parameter count and necessary multiplications by splitting a standard convolution into two stages: first, a depthwise convolution applies a single spatial filter to each channel separately; second, a $1 \times 1$ pointwise convolution projects these outputs into a new channel dimension.
 
 Let $D_K$ be the spatial dimension of the convolutional kernel, $M$ be the number of input channels, $N$ be the number of output channels, and $D_F \times D_F$ be the spatial dimension of the output feature map. The computational cost of a standard convolution is:
 \begin{equation}
@@ -320,12 +320,12 @@ The ratio of computational reduction is expressed as:
 \frac{\text{Cost}_{\text{separable}}}{\text{Cost}_{\text{standard}}} = \frac{1}{N} + \frac{1}{D_K^2}
 \end{equation}
 
-Assuming a standard kernel size of $D_K = 3$, this decomposition reduces the computational complexity by a factor of 8 to 9 depending on the output channel dimension $N$, without significant degradation in classification performance.
+Using a standard $3 \times 3$ kernel ($D_K = 3$), this splitting technique lowers the computational overhead by roughly 80\% to 90\% depending on the output channel count ($N$), while retaining high feature-extraction capacity.
 
 \subsection{Inverted Residual Block (AgriBlock)}
-The AgriBlock serves as the core feature extraction unit of AgriNet, structured as a three-stage block. First, an expansion pointwise convolution ($1 \times 1$) projects the input to a higher-dimensional space based on the expansion factor $t$. Second, a depthwise convolution ($3 \times 3$) extracts spatial features in this high-dimensional space. Third, a projection pointwise convolution ($1 \times 1$) projects the features back down to the target dimension. To prevent information loss and maintain linear representation, we omit the non-linear activation function after the final projection step, forming a linear bottleneck.
+The AgriBlock serves as the primary feature extractor in AgriNet. It is structured in three stages: first, a $1 \times 1$ expansion convolution projects the incoming feature map into a higher-dimensional channel space scaled by an expansion factor $t$; next, a $3 \times 3$ depthwise convolution processes spatial features in this high-dimensional space; finally, a $1 \times 1$ projection layer maps the channels back down to the target dimension. To preserve information and prevent representation collapse through non-linearities, we omit the activation function after the projection layer, creating a linear bottleneck.
 
-An identity shortcut connection is introduced to sum the block input and output. This skip connection is only applied when the stride equals $1$ and the input channels match the output channels. The final network architecture consists of an initial convolutional stem, four sequential AgriBlocks with increasing channel depths, a Global Average Pooling layer, a Dropout layer (configured to $0.3$), and a final fully connected classification layer, as outlined in Table~\ref{tab:agrinet_layout}.
+To facilitate gradient flow, we add an identity shortcut to sum the block's input and output. This skip connection is active only when the block operates with a stride of 1 and the input and output channels are identical. The complete network is composed of an initial convolutional stem, four sequential AgriBlocks with increasing channel capacities, a Global Average Pooling layer, a Dropout layer ($0.3$) to limit overfitting, and a final fully connected classification layer (Table~\ref{tab:agrinet_layout}).
 
 \begin{table}[H]
 \centering
@@ -348,40 +348,40 @@ FC Classifier & $512\times1\times1$ & - & - \\
 \end{table}
 
 \section{Model Training Strategy}
-The training process was divided into two distinct phases.
+We split the model training into two separate phases.
 
 \subsection{Phase 1 Base Model Training Loop}
-The initial phase trained the model solely on the clean PlantVillage dataset. The process ran for 10 epochs using a batch size of 16. The Adam optimizer handled the weight updates starting with a learning rate of 0.001, while Cross-Entropy served as the loss function. A ReduceLROnPlateau scheduler monitored the validation loss. It automatically cut the learning rate in half whenever the performance stopped improving. The best weights were saved based on the lowest recorded validation loss.
+The first phase trained the network from scratch on the clean PlantVillage dataset. Given the hardware constraints of our local setup—specifically an NVIDIA GeForce GTX 1650 with 4 GB of VRAM—we chose a batch size of 16 to prevent CUDA Out-Of-Memory (OOM) errors. The model was trained for 10 epochs (averaging 12.5 minutes per epoch) using the Adam optimizer with an initial learning rate of 0.001 and Cross-Entropy loss. We utilized a \texttt{ReduceLROnPlateau} scheduler to monitor validation loss, automatically halving the learning rate when validation loss plateaued for two consecutive epochs. The best-performing weights were saved based on the lowest validation loss.
 
 \subsection{Phase 2 Mixed-Domain Fine-Tuning Loop}
-The second phase loaded the saved weights from the first phase and switched the dataset to the merged PlantVillage and PlantDoc collection. To avoid catastrophic forgetting, the learning rate was dropped to 0.0001. The model underwent another 10 epochs of fine-tuning. The final weights were saved for API deployment.
+The second phase loaded the weights saved from Phase 1 and introduced the merged PlantVillage and PlantDoc dataset. To prevent the model from overwriting the features it had already learned, we reduced the learning rate to 0.0001. The model was fine-tuned for an additional 10 epochs under these parameters before the final weights were exported for production API deployment.
 
 \section{Knowledge-Grounded RAG Chat Engine}
-A Retrieval-Augmented Generation pipeline was built to supply verified agricultural treatments.
+We built a Retrieval-Augmented Generation (RAG) pipeline to provide farmers with verified, actionable treatment advice.
 
 \subsection{Document Ingestion and Chunking Strategy}
-We developed an automated pipeline to ingest official agricultural publications (e.g., Tomato \cite{nhb_tomato}, Potato \cite{nhb_potato}, Maize \cite{seedco_maize}, Apple \cite{vikaspedia_apple}) and Integrated Disease Management manuals \cite{idm_concept}. The system extracts raw text from these PDFs and processes them using LangChain's \texttt{RecursiveCharacterTextSplitter}. The chunk size is configured to $1,000$ characters with a $200$-character sliding overlap. This overlap maintains semantic continuity across boundary points.
+We developed an offline pipeline to ingest official agricultural guides (e.g., Tomato \cite{nhb_tomato}, Potato \cite{nhb_potato}, Maize \cite{seedco_maize}, Apple \cite{vikaspedia_apple}) along with disease management manuals \cite{idm_concept}. The system extracts raw text from these documents and splits it using LangChain's \texttt{RecursiveCharacterTextSplitter}. We configured the chunk size to 1,000 characters with a 200-character sliding overlap, preserving context and preventing sentences from being cut off at chunk boundaries.
 
 \subsection{Vector Database and Retrieval Mechanics}
-To perform fast similarity search, we embed the text chunks into dense $384$-dimensional vectors using a Sentence-Transformers model. These embeddings are stored locally in a Facebook AI Similarity Search (FAISS) vector index. When a user submits an inquiry, the query is mapped to the same embedding space, and the system runs a cosine-similarity search to retrieve the top $k = 3$ most relevant document chunks.
+To enable fast similarity searches, we convert the text chunks into dense 384-dimensional vector embeddings using a local Sentence-Transformers model (\texttt{all-MiniLM-L6-v2}). These vectors are stored in a local Facebook AI Similarity Search (FAISS) database index. When a user submits a query, it is embedded using the same model, and the system runs a cosine-similarity search to retrieve the top $k = 3$ most relevant document chunks.
 
-\subsection{Context-Grounded Generation (Groq Llama-3.1)}
-The retrieved document chunks are formatted alongside the user query within a strictly constrained system prompt. This prompt is transmitted to the \texttt{llama-3.1-8b-instant} model via the Groq API. The model is explicitly instructed to synthesize answers solely from the retrieved context; if the context lacks relevant information, the model states that it cannot answer. This setup ensures that all responses are context-grounded and contain references to the source documentation, minimizing hallucinations.
+\subsection{Context-Grounded Generation via Groq Llama-3.1}
+The retrieved text chunks and the user's query are compiled into a structured system prompt and sent to the \texttt{llama-3.1-8b-instant} model via the Groq API. The prompt contains strict instructions limiting the model's responses to the retrieved text. If the query does not match the retrieved agricultural documents, or if the user asks questions unrelated to plant pathology, the model is instructed to decline to answer rather than guess. This strict constraint prevents the LLM from hallucinating advice or generating off-topic answers.
 
 \section{Conclusion}
-By combining a lightweight CNN classifier with a localized RAG engine, the proposed methodology addresses both disease identification and treatment advisory within a single, integrated architecture.
+By integrating a custom, lightweight CNN with a localized RAG engine, this methodology provides both fast leaf-based disease classification and verified treatment suggestions in a single workflow.
 
 \chapter{SYSTEM DESIGN AND IMPLEMENTATION}
 
 \section{General}
-This chapter delineates the architectural design and structural implementation details of the AgriVision application, including data flow, database models, and hardware specifications.
+This chapter explains the system design and practical implementation details of the AgriVision system. It covers data flow patterns, database structures, and hardware requirements.
 
 \section{Data Flow Diagrams (DFDs)}
-Data Flow Diagrams (DFDs) track the progression and transformations of data throughout the system.
+Data Flow Diagrams (DFDs) map the movement and transformation of information within the application.
 
-At the Context Level (Level 0), the system acts as a monolithic interface connecting the user, the database, and the vector index. Farmers upload leaf images and input text queries. The system outputs classification predictions, Grad-CAM overlays, RAG responses, and transaction logs.
+At the Context Level (Level 0), the application acts as a single interface interacting with the user, database, and vector index. The user submits leaf photos and text-based questions, receiving classification labels, Grad-CAM visualizations, RAG responses, and history records.
 
-The Level 1 DFD decomposes the system into three primary processes: (i) user authentication, which verifies credentials and issues JWTs; (ii) image prediction, which processes uploads through AgriNet, computes Grad-CAM heatmaps, and saves logs to PostgreSQL; and (iii) the RAG chat loop, which routes user queries through the FAISS vector database and LLM APIs. Figure~\ref{fig:dfd} illustrates these DFD levels.
+The Level 1 DFD divides this workflow into three core operations: (i) user registration and login, which manages credentials and issues secure JSON Web Tokens (JWT); (ii) image diagnostics, which routes uploaded leaf photos through AgriNet, creates Grad-CAM overlays, and records the predictions in PostgreSQL; and (iii) the conversational assistant, which processes user prompts using FAISS indexes and the Groq LLM API. These flows are illustrated in Figure~\ref{fig:dfd}.
 
 \begin{figure}[H]
     \centering
@@ -391,7 +391,7 @@ The Level 1 DFD decomposes the system into three primary processes: (i) user aut
 \end{figure}
 
 \section{Project Architecture}
-The system utilizes a decoupled client-server architecture to ensure high performance, security, and scalability. The separation of concerns between the presentation layer, the application logic, and the machine learning/retrieval subsystems is illustrated in the System Architecture Diagram in Figure~\ref{fig:system_architecture}.
+The system is built on a decoupled client-server model to support high throughput, secure operations, and scaling. Dividing the user interface, backend application, and machine learning components makes the system easier to maintain and update. Figure~\ref{fig:system_architecture} shows this layout.
 
 \begin{figure}[H]
     \centering
@@ -400,14 +400,14 @@ The system utilizes a decoupled client-server architecture to ensure high perfor
     \label{fig:system_architecture}
 \end{figure}
 
-The architecture is divided into three primary layers:
+The design splits responsibilities across three key layers:
 \begin{enumerate}
-    \item \textbf{Presentation Layer (Frontend):} Built using Next.js 14 and React. It serves as a pure client and manages the presentation layer using custom vanilla CSS for glassmorphic visuals, with Framer Motion handling smooth layout transitions. It communicates with the backend via REST APIs for authentication, prediction requests, and conversational chat queries.
-    \item \textbf{Application Logic Layer (Backend):} Powered by FastAPI on Python 3.11. This layer acts as the central orchestrator. It manages API routing, handles secure user authentication using JSON Web Tokens (JWT) and password hashing with Bcrypt, manages request/response payloads, and coordinates services between the machine learning models and the database.
-    \item \textbf{Data and AI Engine Layer:} Consists of three core sub-components:
+    \item \textbf{Presentation Layer (Frontend):} Designed with Next.js 14 and React. This client layer utilizes custom vanilla CSS to implement the glassmorphic styling, and Framer Motion for UI animations. The frontend interacts with the FastAPI backend using standard REST APIs for logins, leaf predictions, and chatbot discussions.
+    \item \textbf{Application Logic Layer (Backend):} Powered by FastAPI running on Python 3.11. This server handles API routing, validates user tokens (JWT) generated via Bcrypt hashing, structures response data, and bridges the machine learning models with the database.
+    \item \textbf{Data and AI Engine Layer:} Contains the core database and model engines:
     \begin{itemize}
-        \item \textbf{PostgreSQL Database:} Persistent storage for user records, prediction histories, and diagnostic statistics, integrated directly with the backend using the Python Prisma Client (\texttt{prisma-client-py}).
-        \item \textbf{Deep Learning Classifier (AgriNet + Grad-CAM):} Executes the lightweight PyTorch model for disease classification and generates explainability heatmaps using Grad-CAM.
+        \item \textbf{PostgreSQL Database:} Holds user records, prediction histories, and crop diagnostics, connected to FastAPI using the Python Prisma Client (\texttt{prisma-client-py}).
+        \item \textbf{Deep Learning Classifier (AgriNet + Grad-CAM):} Runs PyTorch inference using the AgriNet model to identify leaf conditions and computes Grad-CAM heatmaps for prediction explainability.
         \item \textbf{RAG Chat Subsystem:} Connects the FAISS vector database containing the indexed agricultural manuals with the Groq API (\texttt{llama-3.1-8b-instant} model) to serve grounded, verified treatment advice.
     \end{itemize}
 \end{enumerate}
@@ -504,10 +504,10 @@ The system design provides a scalable architecture where frontend interactions, 
 \chapter{RESULT ANALYSIS AND DISCUSSION}
 
 \section{Experimental Results}
-We systematically tracked the performance of the custom AgriNet model during both the initial base training phase and the subsequent mixed-domain fine-tuning stage.
+We evaluated the custom AgriNet model's performance during both the initial clean-dataset training and the subsequent mixed-domain adaptation phase.
 
 \subsection{Phase 1 Base Model Training Results}
-During the initial phase on the pristine PlantVillage corpus, the network exhibited rapid convergence, reaching a validation accuracy of $94.68\%$ by the second epoch. By the final epoch ($10$), the model attained its lowest validation loss of $0.0396$ and a peak validation accuracy of $98.75\%$. These results indicate that the Inverted Residual Blocks effectively extract core leaf features when background noise is minimized. The detailed epoch-by-epoch training progress is reported in Table~\ref{tab:phase1_metrics}.
+When training on the clean images of the PlantVillage dataset, the model converged quickly, achieving a validation accuracy of 94.68\% by the second epoch. By the tenth epoch, validation loss decreased to 0.0396, and the validation accuracy reached 98.75\%. This rapid learning shows that the custom inverted residual blocks are highly effective at capturing leaf-specific features when the background is uniform and free of noise. The epoch-by-epoch training progress is detailed in Table~\ref{tab:phase1_metrics}.
 
 \begin{table}[H]
 \centering
@@ -533,7 +533,7 @@ During the initial phase on the pristine PlantVillage corpus, the network exhibi
 \end{table}
 
 \subsection{Phase 2 Mixed-Domain Fine-Tuning Results}
-Phase 2 introduced the challenging, noisy PlantDoc images into the training pipeline. Although natural backgrounds, occlusion, and variable illumination increased training difficulty, the model converged within $9$ epochs, achieving a mixed-domain validation accuracy of $96.14\%$. This validates the effectiveness of our domain adaptation approach in handling natural field environments. Table~\ref{tab:phase2_metrics} provides the fine-tuning training metrics.
+Introducing the noisy, field-captured images from the PlantDoc dataset during the second training phase increased task difficulty due to natural backdrops, variable lighting, and leaf occlusions. Despite these challenges, the model stabilized within 9 epochs, reaching a mixed-domain validation accuracy of 96.14\%. This results shows that the model successfully adapted to different domains, validating the training pipeline's effectiveness in adapting to real-world environments. The detailed metrics are shown in Table~\ref{tab:phase2_metrics}.
 
 \begin{table}[H]
 \centering
@@ -559,7 +559,7 @@ Phase 2 introduced the challenging, noisy PlantDoc images into the training pipe
 \end{table}
 
 \section{Performance Evaluation Metrics}
-We evaluated classification performance using standard statistical metrics: Precision, Recall, and F1-score. Precision measures the ratio of true positive predictions to all predicted positives; Recall measures the ratio of true positives to all actual positive instances; and the F1-score is computed as their harmonic mean. On the combined validation dataset, the model achieved a weighted average of $0.99$ across all three metrics. The corresponding 38-class confusion matrix is illustrated in Figure~\ref{fig:confusion_matrix}.
+To assess the classifier's performance, we computed standard metrics: precision, recall, and F1-score. Precision measures the accuracy of positive predictions; recall indicates the model's ability to find all actual positive cases; and the F1-score represents the harmonic mean of both metrics. Across the combined validation dataset, the custom network achieved a weighted average of 0.99 for all three scores. The detailed classification results are illustrated in the 38-class confusion matrix in Figure~\ref{fig:confusion_matrix}.
 
 \begin{figure}[H]
     \centering
@@ -579,11 +579,11 @@ To validate the real-world robustness of the proposed system, zero-shot field te
 \end{figure}
 
 \section{Explainable AI (XAI) via Grad-CAM Visualizations}
-Gradient-weighted Class Activation Mapping (Grad-CAM) was added to ensure the predictions are transparent. Grad-CAM looks at the gradients of the target class score relative to the feature map activations in the final convolutional layer. It globally pools these gradients to figure out the importance of each feature map. Applying a ReLU activation isolates the specific features that push the model toward the target class:
+We integrated Gradient-weighted Class Activation Mapping (Grad-CAM) to make the model's classification decisions transparent. Grad-CAM computes the gradients of the target class score with respect to the feature map activations in the final convolutional layer of AgriNet. These gradients are globally pooled to evaluate the relative importance of each feature map. Applying a ReLU activation filters out negative gradients, isolating the specific visual features that drive the model's prediction:
 \begin{equation}
 L^c_{\text{Grad-CAM}} = \text{ReLU}\left(\sum_k \alpha_k^c A^k\right)
 \end{equation}
-When this resulting heatmap is laid over the original image, it shows the model actively focusing on leaf lesions rather than background soil or shadows, as demonstrated by the overlay heatmap in Figure~\ref{fig:gradcam}.
+When the resulting heatmap is overlaid onto the input image, we observe that the model focuses directly on relevant symptoms, such as the concentric rings of early blight or the white patches of powdery mildew. It successfully ignores background distractors like soil, weeds, and shadows, as shown in Figure~\ref{fig:gradcam}.
 
 \begin{figure}[H]
     \centering
@@ -599,11 +599,12 @@ The proposed application proves that a custom, lightweight CNN can deliver high 
 \subsection{Future Scope}
 Several areas remain open for future development. Converting the AgriNet weights into ONNX or TensorFlow Lite formats would allow the model to run offline on mobile phones. The network architecture could be modified to support dual-task learning, adding a regression head to calculate the percentage of leaf area affected by the disease. Interfacing the backend with drone imagery would enable large-scale farm monitoring. Finally, translating the user interface and the RAG outputs into local regional languages would greatly improve accessibility for rural farming communities.
 
+\renewcommand{\bibname}{REFERENCES}
 \begin{thebibliography}{99}
 \addcontentsline{toc}{chapter}{REFERENCES}
 
-\bibitem{sarunyagate1996}
-D. Sarunyagate, Ed., \textit{Lasers}. New York: McGraw-Hill, 1996.
+\bibitem{alhiary2011}
+A. Al-Hiary, S. Bani-Ahmad, M. Reyalat, M. Braik, and Z. AlRahamneh, ``Fast and accurate detection and classification of plant diseases,'' \textit{Int. J. Comput. Appl.}, vol. 17, no. 1, pp. 31--37, 2011.
 
 \bibitem{plantvillage}
 D. Hughes and M. Salathe, ``An open access repository of images on plant health,'' \textit{arXiv preprint arXiv:1511.01119}, Nov. 2015.
